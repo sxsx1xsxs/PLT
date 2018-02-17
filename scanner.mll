@@ -35,3 +35,6 @@ rule tokenize = parse
   | 'true'  {TRUE}
   | 'false' {FALSE}
   | 'null'  {NULL}
+  | '"' [^'"']* '"' as lit {STRING(lit)}
+  | ['0'-'9']+ as num { LITERAL(int_of_string num) }
+  | eof     {EOF}
