@@ -1,14 +1,14 @@
 { open Parser }
 
-rule tokenize = parse
-    [' ', '\t', '\n'] { tokenize lexbuf }
-  | "/*"    { comment lexbuf }
+rule token pat = parse
+    [' ', '\t', '\n'] { token pat lexbuf }
+  | "/*"    { comment pat lexbuf }
   | '+'     {PLUS}
   | '-'     {MINUS}
   | '*'     {TIMES}
   | '/'     {DIVIDE}
   | '%'     {MOD}
-  | '@'     {REGEX}
+  | '@'     {pat := RE; REGEX}
   | "=="    {EQ}
   | "!="    {NEQ}
   | ">>"    {RAPPEND}
@@ -33,6 +33,7 @@ rule tokenize = parse
   | "else"  {ELSE}
   | "for"   {FOR}
   | "while" {WHILE}
+  | "return" {RETURN}
   | "true"  {TRUE}
   | "false" {FALSE}
   | "null"  {NULL}
@@ -40,7 +41,16 @@ rule tokenize = parse
   | ['0'-'9']+ as num { LITERAL(int_of_string num) }
   | eof     {EOF}
 
-  and comment = parse
+  and comment pat = parse
     "*/" { tokenize lexbuf }
   | _    { comment lexbuf }
 
+  and regex pat = parse
+  | "@" { pat := NORMAL ; REGEX }
+  | _ as lit {REGEX_STRING(lit)}
+
+  {
+    let next_token lexbuf = match !state_ref with
+       | NORMAL -> token state_ref lexbuf
+       | RE -> regex state_ref lexbuf
+  }
