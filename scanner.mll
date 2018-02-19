@@ -8,7 +8,7 @@ rule tokenize = parse
   | '*'     {TIMES}
   | '/'     {DIVIDE}
   | '%'     {MOD}
-  | '@'     {REGEX}
+  | '@'     {REFLAG}
   | "=="    {EQ}
   | "!="    {NEQ}
   | ">>"    {RAPPEND}
