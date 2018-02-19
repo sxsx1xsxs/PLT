@@ -33,11 +33,12 @@ $token IF ELIF ELSE FOR WHILE
 
 /*functions are */
 program:
-fdecl_list rule_list EOF { { func_decls =List.rev $1; rules= List.rev $2 } }
+decls rule_list EOF { { func_decls =List.rev $1; rules= List.rev $2 } }
 
-fdecl_list:
-    /* nothing */  { [] }
-    | fdecl_list fdecl { $2 :: $1 }
+/* start of decls */
+decls:            { ([], []) }
+    | decls vdecl { (($2 :: fst $1), snd $1) }
+    | decls fdecl { (fst $1, ($2 :: snd $1)) }
 
 fdecl:
     typ ID LPAREN formals_opt RPAREN LBRACE vdecl_list stmt_list RBRACE
@@ -55,7 +56,7 @@ typ:
     | INT { Int }
 
 formals_opt:
- /* nothing */ { [] }
+                 { [] }
  | formal_list   { List.rev $1 }
  
 formal_list:
@@ -63,29 +64,32 @@ formal_list:
     | formal_list COMMA typ ID { ($3,$4) :: $1 }
 
 vdecl_list:
-    /* nothing */    { [] }
+                       { [] }
     | vdecl_list vdecl { $2 :: $1 }
 
 vdecl: typ ID assign_opt SEMI { ($1, $2, $3) }
 
 /*Initialize a variable upon declaration */
 assign_opt:
-    /* nothing */  { Noexpr }
+                  { Noexpr }
     | ASSIGN expr { $2 }
 
+/* end of decls */
 
+/* start of rule_list */
 rule_list:
-    {[]}
+                      {[]}
     | rule_list rdecl {$2 :: $1}
 
 rdecl:
     pattern action {$1, $2}
 
 pattern:
-    REGEX regex_sequence REGEX {RegexPattern($2)}
+    REGEX single_regex REGEX {RegexPattern($2)}
 
 action:
     LBC vdecl_list stmt_list RBC {List.rev $2, List.rev $3}
+/* end of rule_list */
 
 stmt_list:
     {[]}
@@ -100,7 +104,7 @@ stmt:
 | FOR LPR expr_opt SEMI expr SEMI expr_opt RPAREN stmt { For($3, $5, $7, $9) }
 | WHILE LPR expr RPR stmt { While($3, $5) }
 
- expr_opt:
+expr_opt:
      { Noexpr }
      | expr { $1 }
 
@@ -123,35 +127,19 @@ expr:
     | MINUS expr %prec NEG { Unop(Neg, $2) }
     | NOT expr         { Unop(Not, $2) }
     | ID ASSIGN expr   { Assign($1, $3) }
-    | LBK RBK          { Call("create", [])}
+    | LBK RBK          { Call("create", []) }
+    | ID LPR args_opt RPR { Call($1, $3) }
     | LPR expr RPR     { $2 }
 
-/*Start of Regex*/
-
-regex_sequence:
-    regex {$1}
-    | regex regex_sequence {$1^$2}
-
+args_opt:
+    { [] }
+    | args_list { List.rev $1 }
+args_list:
+    expr { [$1] }
+    | args_list COMMA expr { $3 :: $1 }
+/* start of regex */
 regex:
     REGEX_STRING {$1}
-    | PERIOD {"."}
-    | LPR regex_sequence RPR {"("^$2^")"}
-    | LBK regex_set_sequence RBK {"["^$2^"]"}
-    | regex QUEST {$1^"?"}
-    | regex PLUS {$1^"+"}
-    | regex TIMES {$1^"*"}
-    | regex VERT  {$1^"|"}
+/* end of regex */
 
-regex_set:
-    REGEX_STRING {$1}
-    | REGEX_STRING RMINUS REGEX_STRING{$1^"-"^$3}
-    | CARROT regex_set {"^"^$2}
-    | LBK regex_set_sequence RBK {"["^$2^"]"}
-
-regex_set_sequence:
-    regex_set {$1}
-    | regex_set regex_set_sequence {$1^$2}
-
-/*End of Regex */
-
-/* missing stuff: arrays, actuals, noelse, need regex_string type and all regex operators in scanner first*/
+/* missing stuff: arrays, actuals, noelse, <string> REGEX_STRING as a token*/
