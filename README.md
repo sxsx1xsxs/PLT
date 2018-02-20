@@ -8,11 +8,12 @@ Yi Zhang (yz3206)
 Guanming Qiao (gq2135)
 Chunlin Zhu (cz2487)
 
-Syntax In-coming:
+
+1.Syntax In-coming:
+things related to regex and array implementation
 
 
-How to compile and execute the compiler:
-
+2.How to compile and execute the compiler:
 First edit the test.of file for your test, "of" standing for OpenFile file.
 Then run:
     ocamlbuild -clean toplevel.native
@@ -22,8 +23,7 @@ The last execution should print a "it passes" if it passes.
 Error states will cause the parser to backtrack and die. 
 
 
-How to run the test script:
-
+3.How to run the test script:
 "python script.py" (python3) will build the compiler, test against the 10 test cases and then measure whether it's the 
 expected result. After running this, you should see the prompt "The result matches what we expected" for all 10 test cases with the output of each test cases, which means the 5 positive tests all pass and the 5 negative tests all fail. 
 
