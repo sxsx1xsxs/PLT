@@ -1,0 +1,10 @@
+### Starting build.
+# Target: openFile.ml.depends, tags: { extension:ml, file:openFile.ml, ocaml, ocamldep, quiet }
+/Users/guanmingqiao/.opam/4.00.0/bin/ocamldep.opt -modules openFile.ml > openFile.ml.depends
+# Target: ast.ml.depends, tags: { extension:ml, file:ast.ml, ocaml, ocamldep, quiet }
+/Users/guanmingqiao/.opam/4.00.0/bin/ocamldep.opt -modules ast.ml > ast.ml.depends
++ /Users/guanmingqiao/.opam/4.00.0/bin/ocamldep.opt -modules ast.ml > ast.ml.depends
+File "ast.ml", line 26, characters 0-4:
+Error: Syntax error
+Command exited with code 2.
+# Compilation unsuccessful.

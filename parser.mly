@@ -12,9 +12,10 @@ $token IF ELIF ELSE FOR WHILE
 %token TRUE FALSE NULL
 %token PLUS MINUS TIMES DIVIDE MOD EQ NEQ LEQ REQ
 %token RAPPEND LAPPEND LR RL AND OR NOT
-%token REGEX EOF
+%token REGEX EOF 
 %token <string> STRING
 %token <int> LITERAL
+%token <string> REGEX_STRING
 
 %nonassoc ELSEIF
 %nonassoc ELSE
@@ -138,8 +139,8 @@ args_list:
     expr { [$1] }
     | args_list COMMA expr { $3 :: $1 }
 /* start of regex */
-regex:
-    REGEX_STRING {$1}
+single_regex:
+    REGEX_STRING { $1 }
 /* end of regex */
 
 /* missing stuff: arrays, actuals, noelse, <string> REGEX_STRING as a token*/
