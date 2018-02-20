@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-int
-=======
 int gcd (int a, int b)
 {
     while (a != b) { 
@@ -13,4 +10,4 @@ int gcd (int a, int b)
     return a;
     }
 }
->>>>>>> f52b17cc98a4140de4a41525146e46c6bae025b8
+
