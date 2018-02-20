@@ -1,8 +1,8 @@
 /*negative test*/
-/*Weird binop*/
+/*Weird variable type*/
 
-int WeirdBinop (int a, string b)
+int WeirdVariableType (int a, string b)
 {
-    float c = a + b;
+    Boom c = a + b;
 }
 

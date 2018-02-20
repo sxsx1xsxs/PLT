@@ -1,8 +1,8 @@
 /*negative test*/
-/*Missing variable declaration*/
+/*Multiple variable declaration*/
 
 int MissingBegin (int a, int b)
 {
-    c = 1;
+    int float string c = 1;
 }
 
