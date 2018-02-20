@@ -1,4 +1,4 @@
-/* Ocamlyacc parser for CARL
+/* Ocamlyacc parser for OpenFile
 This code was original from MicroC and modified by:
 Guanming Qiao; Binwei Xu; Yi Zhang; Chunlin Zhu; Xinjian Wu*/
 
