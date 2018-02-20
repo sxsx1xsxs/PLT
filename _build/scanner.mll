@@ -1,4 +1,8 @@
-{ open Parser }
+{ 
+    open Parser
+    type pattern = RE | NORMAL
+    let state_ref = ref NORMAL
+}
 
 (* define some common character classes here *)
 let digits = ['0' - '9']+
@@ -50,15 +54,15 @@ rule token pat = parse
   | ['0'-'9']+ as num { INT_T(int_of_string num) }
   | ['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9' '_']* as lxm { ID (lxm) }
   | eof     {EOF}
-  | _ as char { raise (Failure("illegal character " ^ Char.escaped char)) }
+  | _ as error { raise (Failure("illegal character " ^ Char.escaped error)) }
 
   and comment pat = parse
-    "*/" { tokenize lexbuf }
-  | _    { comment lexbuf }
+    "*/" { token pat lexbuf }
+  | _    { comment pat lexbuf }
 
   and regex pat = parse
   | "@" { pat := NORMAL ; REGEX }
-  | _ as lit {REGEX_STRING(lit)}
+  | _ as lit {REGEX_STRING(Char.escaped lit)}
 
   {
     let next_token lexbuf = match !state_ref with

@@ -35,12 +35,12 @@ let quote_remover a = String.sub a 1 ((String.length a) - 2);;
 
 /*functions are */
 program:
-decls rule_list EOF { { func_decls =List.rev $1; rules= List.rev $2 } }
+    fdecl_list rule_list EOF { {decls = List.rev $1; rules= List.rev $2 } }
 
 /* start of decls */
-decls:            { ([], []) }
-    | decls vdecl { (($2 :: fst $1), snd $1) }
-    | decls fdecl { (fst $1, ($2 :: snd $1)) }
+fdecl_list:
+    /* nothing */  { [] }
+    | fdecl_list fdecl { $2 :: $1 }
 
 fdecl:
     typ ID LPR formals_opt RPR LBC vdecl_list stmt_list RBC
@@ -66,21 +66,22 @@ formal_list:
     | formal_list COMMA typ ID { ($3,$4) :: $1 }
 
 vdecl_list:
-                       { [] }
+    { [] }
     | vdecl_list vdecl { $2 :: $1 }
 
-vdecl: typ ID assign_opt SEMI { ($1, $2, $3) }
+vdecl: 
+    typ ID assign_opt SEMI { ($1, $2, $3) }
 
 /*Initialize a variable upon declaration */
 assign_opt:
-                  { Noexpr }
+    { Noexpr }
     | ASSIGN expr { $2 }
 
 /* end of decls */
 
 /* start of rule_list */
 rule_list:
-                      {[]}
+    {[]}
     | rule_list rdecl {$2 :: $1}
 
 rdecl:
