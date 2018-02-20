@@ -36,9 +36,16 @@ rule token pat = parse
   | "return" {RETURN}
   | "true"  {TRUE}
   | "false" {FALSE}
-  | "null"  {NULL}
-  | '"' [^'"']* '"' as lit {STRING(lit)}
-  | ['0'-'9']+ as num { LITERAL(int_of_string num) }
+  | "void"  {VOID}
+  | "float" {FLOAT}
+  | "bool"  {BOOL}
+  | "int"   {INT}
+  | "string" {STRING}
+  | '"' [^'"']* '"' as lit { STRING_T(lit) }
+  |['-']?digits as lxm {FLOAT_T(float_of_string lxm)}
+  | ['-']?['0' - '9']+['.']['0' - '9']+ as lxm {FLOAT_T(float_of_string lxm)}
+  | ['0'-'9']+ as num { INT_T(int_of_string num) }
+  | ['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9' '_']* as lxm { ID (lxm) }
   | eof     {EOF}
 
   and comment pat = parse
