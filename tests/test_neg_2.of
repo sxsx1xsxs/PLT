@@ -1,15 +1,7 @@
 /*negative test*/
-/*assigning a string to an integer*/
+/*Multiple binary operation*/
 
-int gcd (int a, int b)
+int MultiBinop (int a, int b)
 {
-    if (a != b) { 
-        if (a > b) {
-            a = "hi";
-        }
-        else { 
-            b = b - a;
-        }
-    return a;
-    }
+    a = a +-*/ b;
 }
