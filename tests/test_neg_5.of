@@ -1,16 +1,8 @@
 /*negative test*/
-/*assigning a string to an integer*/
+/*Weird binop*/
 
-int gcd (int a, int b)
+int WeirdBinop (int a, string b)
 {
-    if (a != b) { 
-        if (a > b) {
-            a = "hi";
-        }
-        else { 
-            b = b - a;
-        }
-    return a;
-    }
+    float c = a + b;
 }
 
