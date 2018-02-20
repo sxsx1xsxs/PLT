@@ -10,6 +10,7 @@ let digits = ['0' - '9']+
 rule token pat = parse
     [' ' '\t' '\n'] { token pat lexbuf }
   | "/*"    { comment pat lexbuf }
+  | "="     {ASSIGN}
   | '+'     {PLUS}
   | '-'     {MINUS}
   | '*'     {TIMES}
