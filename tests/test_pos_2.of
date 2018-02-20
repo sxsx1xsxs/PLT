@@ -2,10 +2,10 @@
 
 int expo (int a, int b)
 {
-    int sum = 1;
+    int product = 1;
     while (b > 0) { 
-        sum = sum * a;
-	b = b - 1;
+        product = product * a;
+		b = b - 1;
     }
-    return sum;
+    return product;
 }
