@@ -3,12 +3,22 @@
 /Users/guanmingqiao/.opam/4.00.0/bin/ocamldep.opt -modules openFile.ml > openFile.ml.depends # cached
 # Target: ast.ml.depends, tags: { extension:ml, file:ast.ml, ocaml, ocamldep, quiet }
 /Users/guanmingqiao/.opam/4.00.0/bin/ocamldep.opt -modules ast.ml > ast.ml.depends # cached
+# Target: ast.cmo, tags: { byte, compile, extension:cmo, extension:ml, file:ast.cmo, file:ast.ml, implem, ocaml, quiet }
+/Users/guanmingqiao/.opam/4.00.0/bin/ocamlc.opt -c -o ast.cmo ast.ml # cached
 # Target: parser.mly, tags: { extension:mly, file:parser.mly, ocaml, ocamlyacc, parser, quiet }
-/Users/guanmingqiao/.opam/4.00.0/bin/ocamlyacc parser.mly
+/Users/guanmingqiao/.opam/4.00.0/bin/ocamlyacc parser.mly # cached
 # Target: parser.mli.depends, tags: { extension:mli, file:parser.mli, ocaml, ocamldep, quiet }
-/Users/guanmingqiao/.opam/4.00.0/bin/ocamldep.opt -modules parser.mli > parser.mli.depends
-+ /Users/guanmingqiao/.opam/4.00.0/bin/ocamldep.opt -modules parser.mli > parser.mli.depends
-File "parser.mli", line 10, characters 4-5:
-Error: Syntax error
+/Users/guanmingqiao/.opam/4.00.0/bin/ocamldep.opt -modules parser.mli > parser.mli.depends # cached
+# Target: scanner.mll, tags: { extension:mll, file:scanner.mll, lexer, ocaml, ocamllex, quiet }
+/Users/guanmingqiao/.opam/4.00.0/bin/ocamllex.opt -q scanner.mll
+# Target: scanner.ml.depends, tags: { extension:ml, file:scanner.ml, ocaml, ocamldep, quiet }
+/Users/guanmingqiao/.opam/4.00.0/bin/ocamldep.opt -modules scanner.ml > scanner.ml.depends
+# Target: parser.cmi, tags: { byte, compile, extension:mli, file:parser.mli, interf, ocaml, quiet }
+/Users/guanmingqiao/.opam/4.00.0/bin/ocamlc.opt -c -o parser.cmi parser.mli
+# Target: scanner.cmo, tags: { byte, compile, extension:cmo, extension:ml, file:scanner.cmo, file:scanner.ml, implem, ocaml, quiet }
+/Users/guanmingqiao/.opam/4.00.0/bin/ocamlc.opt -c -o scanner.cmo scanner.ml
++ /Users/guanmingqiao/.opam/4.00.0/bin/ocamlc.opt -c -o scanner.cmo scanner.ml
+File "scanner.mll", line 14, characters 20-22:
+Error: Unbound constructor RE
 Command exited with code 2.
 # Compilation unsuccessful.

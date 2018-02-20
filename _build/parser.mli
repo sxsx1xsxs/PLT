@@ -7,7 +7,6 @@ type token =
   | RBK
   | LBC
   | RBC
-  | $token
   | IF
   | ELIF
   | ELSE

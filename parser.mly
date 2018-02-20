@@ -8,7 +8,7 @@ let quote_remover a = String.sub a 1 ((String.length a) - 2);;
 %}
 
 %token SEMI COMMA LPR RPR LBK RBK LBC RBC
-$token IF ELIF ELSE FOR WHILE
+%token IF ELIF ELSE FOR WHILE
 %token TRUE FALSE
 %token PLUS MINUS TIMES DIVIDE MOD EQ NEQ LEQ REQ
 %token RAPPEND LAPPEND LR RL AND OR NOT
