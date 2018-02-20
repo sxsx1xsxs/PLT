@@ -8,7 +8,7 @@ rule token pat = parse
   | '*'     {TIMES}
   | '/'     {DIVIDE}
   | '%'     {MOD}
-  | '@'     {pat := REGEX}
+  | '@'     {pat := RE; REGEX}
   | "=="    {EQ}
   | "!="    {NEQ}
   | ">>"    {RAPPEND}
@@ -46,4 +46,11 @@ rule token pat = parse
   | _    { comment lexbuf }
 
   and regex pat = parse
-  |....
+  | "@" { pat := NORMAL ; REGEX }
+  | _ as lit {REGEX_STRING(lit)}
+
+  {
+    let next_token lexbuf = match !state_ref with
+       | NORMAL -> token state_ref lexbuf
+       | RE -> regex state_ref lexbuf
+  }

@@ -22,5 +22,14 @@ type func_decl = {
         fornals : bind list;
         locals  : bind list;
         body    : stmt list;
+}
+
+type bind_init = typ * string * expr
 
 type program = bind list * func_decl list
+
+type action = bind_init list * stmt list
+
+type pattern = RegexPattern of string
+
+type rule = pattern * action
