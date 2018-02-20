@@ -22,3 +22,4 @@ To disable printing of state transitions when parsing, run
     export OCAMLRUNPARAM='' in your terminal. 
 To reenable it, run 
     export OCAMLRUNPARAM='p'
+To generate new .output file for parser, use ocamlyacc -v parser.mly
