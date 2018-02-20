@@ -12,13 +12,12 @@ let quote_remover a = String.sub a 1 ((String.length a) - 2);;
 %token TRUE FALSE
 %token PLUS MINUS TIMES DIVIDE MOD EQ NEQ LEQ REQ
 %token RAPPEND LAPPEND LR RL AND OR NOT
-%token REGEX EOF 
+%token REGEX EOF ASSIGN 
 %token RETURN BOOL VOID FLOAT STRING INT
 %token <string> ID REGEX_STRING STRING_T
 %token <int> INT_T
 %token <float> FLOAT_T
 
-%nonassoc ELSEIF
 %nonassoc ELSE
 %right ASSIGN
 %left OR

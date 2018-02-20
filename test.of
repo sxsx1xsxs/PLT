@@ -1,1 +1,16 @@
+<<<<<<< HEAD
 int
+=======
+int gcd (int a, int b)
+{
+    while (a != b) { 
+        if (a > b) {
+            a = a - b;
+        }
+        else { 
+            b = b - a;
+        }
+    return a;
+    }
+}
+>>>>>>> f52b17cc98a4140de4a41525146e46c6bae025b8

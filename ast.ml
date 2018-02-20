@@ -37,4 +37,4 @@ type program = {
     rules: rule list;
 }
 
-let string_of_program input_program = "whatever"
+let string_of_program input_program = "\n it passes"

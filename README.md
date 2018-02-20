@@ -8,3 +8,17 @@ Yi Zhang (yz3206)
 Guanming Qiao (gq2135)
 Chunlin Zhu (cz2487)
 
+Testing Instruction Without Toplevel:
+
+First edit the test.of file for your test, "of" standing for OpenFile
+Then run:
+    ocamlbuild -clean openFile.native
+    ocamlbuild openFile.native
+    ./openFile.native test.of
+The last execution should print a "it passes" if it passes. 
+Error states will cause the parser to backtrack and die. 
+To debug parser, refer to the state where the parser began to backtrack from parser.output file, which contains all states in the parser. 
+To disable printing of state transitions when parsing, run 
+    export OCAMLRUNPARAM='' in your terminal. 
+To reenable it, run 
+    export OCAMLRUNPARAM='p'
