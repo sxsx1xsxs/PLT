@@ -1,6 +1,6 @@
 /* Ocamlyacc parser for OpenFile
 This code was original from MicroC and modified by:
-Guanming Qiao; Binwei Xu; Yi Zhang; Chunlin Zhu; Xinjian Wu*/
+Guanming Qiao; Binwei Xu; Yi Zhang; Chunlin Zhu; Xinjian Wu */
 
 %{
 open Ast
@@ -34,20 +34,18 @@ let quote_remover a = String.sub a 1 ((String.length a) - 2);;
 
 /*functions are */
 program:
-    fdecl_list rule_list EOF { {decls = List.rev $1; rules= List.rev $2 } }
+    { [], [] }
+    | program vdecl    { ($2 :: fst $1), snd $1 }
+    | program fdecl    { fst $1, ($2 :: snd $1) }
 
 /* start of decls */
-fdecl_list:
-    /* nothing */  { [] }
-    | fdecl_list fdecl { $2 :: $1 }
-
 fdecl:
     typ ID LPR formals_opt RPR LBC vdecl_list stmt_list RBC
-    { { typ = $1;
-    fname = $2;
-    formals = $4;
-    locals = List.rev $7;
-    body = List.rev $8 } }
+    { { ftyp = $1;
+        fname = $2;
+        formals = $4;
+        locals = List.rev $7;
+        body = List.rev $8 } }
 
 typ:
     | VOID { Void }
@@ -57,24 +55,22 @@ typ:
     | INT { Int }
 
 formals_opt:
-                 { [] }
- | formal_list   { List.rev $1 }
+                    { [] }
+    | formal_list   { List.rev $1 }
  
 formal_list:
-    typ ID { [($1,$2)] }
-    | formal_list COMMA typ ID { ($3,$4) :: $1 }
+    typ ID                   { [{vtyp = $1; vname = $2; vexpr = Noexpr}] }
+    | formal_list COMMA typ ID { {vtyp = $3; vname = $4; vexpr = Noexpr} :: $1 }
+
 
 vdecl_list:
-    { [] }
+                       { [] }
     | vdecl_list vdecl { $2 :: $1 }
 
-vdecl: 
-    typ ID assign_opt SEMI { ($1, $2, $3) }
+vdecl:
+    typ ID SEMI { {vtyp = $1; vname = $2; vexpr = Noexpr} }
+    | typ ID ASSIGN expr SEMI { {vtyp = $1; vname = $2; vexpr = $4} }
 
-/*Initialize a variable upon declaration */
-assign_opt:
-    { Noexpr }
-    | ASSIGN expr { $2 }
 
 /* end of decls */
 

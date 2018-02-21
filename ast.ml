@@ -18,23 +18,28 @@ type stmt = Block of stmt list | Expr of expr | Return of expr
 
 type init = typ * string * expr
 
+(* type decl = var_decl list | func_decl list *)
+
+type var_decl = {
+        vtyp  : typ;
+        vname : string;
+        vexpr : expr;
+}
+
 type func_decl = {
-        typ     : typ;
+        ftyp    : typ;
         fname   : string;
-        formals : bind list;
-        locals  : init list;
+        formals : var_decl list;
+        locals  : var_decl list;
         body    : stmt list;
 }
 
-type action = init list * stmt list
+type action = var_decl list * stmt list
 
 type pattern = RegexPattern of string
 
 type rule = pattern * action
 
-type program = {
-    decls: func_decl list;
-    rules: rule list;
-}
+type program = var_decl list * func_decl list
 
 let string_of_program input_program = "it passes\n"
