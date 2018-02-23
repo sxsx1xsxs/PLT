@@ -6,6 +6,8 @@ For Mac OS: https://cloud.google.com/sdk/docs/quickstart-macos
 follow the instruction to install and config, our default compute zone should be us-east-1-b
 
 Then you can use "gcloud compute ssh [uni]@instance-1" to access the vm
+inside the vm use "sudo poweroff" to shutdown the vm
+"gcloud compute instances start instance-1" to restart the vm
 
 
 The installation I did today but I don't know whether it's global or not
@@ -15,4 +17,6 @@ The installation I did today but I don't know whether it's global or not
 3. sudo apt install git
 4. do the git clone thing
 5. little trick: run "git config credential.helper store" to store your credentials for github so that every time when you push something, you don't need to re-enter your username and password everytime
+
+
 
