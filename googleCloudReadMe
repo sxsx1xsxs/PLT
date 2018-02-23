@@ -14,5 +14,5 @@ The installation I did today but I don't know whether it's global or not
 2. sudo apt install ocaml
 3. sudo apt install git
 4. do the git clone thing
-
+5. little trick: run "git config credential.helper store" to store your credentials for github so that every time when you push something, you don't need to re-enter your username and password everytime
 
