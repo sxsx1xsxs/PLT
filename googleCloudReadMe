@@ -1,0 +1,16 @@
+Yi Zhang (1/23)
+
+it's very convenient to have google cloud sdk on your local computer so that you can aceess the vm via terminal directly
+For Mac OS: https://cloud.google.com/sdk/docs/quickstart-macos
+
+follow the instruction to install and config, our default compute zone should be us-east-1-b
+
+Then you can use "gcloud compute ssh [uni]@instance-1" to access the vm
+
+
+The installation I did today but I don't know whether it's global or not
+
+1. sudo apt install build-essential
+2. sudo apt install ocaml
+3. sudo apt install git
+4. do the git clone thing
