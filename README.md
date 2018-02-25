@@ -26,3 +26,4 @@ To disable printing of state transitions when parsing, run
 To reenable it, run 
     export OCAMLRUNPARAM='p'
 To generate new .output file for parser, use ocamlyacc -v parser.mly
+
