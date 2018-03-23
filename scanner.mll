@@ -45,14 +45,17 @@ rule token pat = parse
   | "true"  {TRUE}
   | "false" {FALSE}
   | "void"  {VOID}
+  | "array_float" { ARRAY_F }
+  | "array_int" { ARRAY_I }
+  | "array_string" { ARRAY_S }
   | "float" {FLOAT}
   | "bool"  {BOOL}
   | "int"   {INT}
   | "string" {STRING}
   | '"' [^'"']* '"' as lit { STRING_T(lit) }
   | ['-']?digits as lxm {FLOAT_T(float_of_string lxm)}
-  | ['-']?digits['.']digits as lxm {FLOAT_T(float_of_string lxm)}
-  | ['-']?['1'-'9']digits as num { INT_T(int_of_string num) }
+  | ['-']?['0' - '9']+['.']['0' - '9']+ as lxm {FLOAT_T(float_of_string lxm)}
+  | ['-']?digits as num { INT_T(int_of_string num) }
   | ['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9' '_']* as lxm { ID (lxm) }
   | eof     {EOF}
   | _ as error { raise (Failure("illegal character " ^ Char.escaped error)) }
