@@ -21,30 +21,48 @@ module StringMap = Map.Make(String)
 
 (* Code Generation from the SAST. Returns an LLVM module if successful,
    throws an exception if something is wrong. *)
-let translate (globals, functions) =
-  let context    = L.global_context () in
-  (* Add types to the context so we can use them in our LLVM code *)
-  let i32_t      = L.i32_type    context
-  and i8_t       = L.i8_type     context
-  and i1_t       = L.i1_type     context
-  and float_t    = L.double_type context
-  and void_t     = L.void_type   context 
-  (* Create an LLVM module -- this is a "container" into which we'll 
-     generate actual code *)
-  and the_module = L.create_module context "MicroC" in
+let context    = L.global_context () in
+let the_module = L.create_module context "OpenFile"
+(* Add types to the context so we can use them in our LLVM code *)
+  
+let i32_t      = L.i32_type    context
+and i8_t       = L.i8_type     context
+and i1_t       = L.i1_type     context
+and float_t    = L.double_type context
+and void_t     = L.void_type   context;;
 
+let void_p     = L.pointer_type i8_t;;
+let str_t      = L.pointer_type i8_t;;
+let arr_t      = L.i64_type context;;
+
+let translate (globals, functions) =
   (* Convert MicroC types to LLVM types *)
   let ltype_of_typ = function
       A.Int   -> i32_t
     | A.Bool  -> i1_t
+    | A.String_t -> str_t
     | A.Float -> float_t
     | A.Void  -> void_t
+    | A.Char  -> i8_t
+    | A.Array_f -> void_p
+    | A.Array_s -> void_p
   in
-
+  
+  let rec global_init = function
+    | A.Int -> L.const_int i32_t 0
+    | A.Bool -> L.const_int i1_t 0
+    | A.Char -> L.const_int i8_t 0
+    | A.String_t -> L.const_pointer_null str_t
+    | A.Void -> L.const_int void_t 0
+    | A.Float -> L.const_float float_t 0.0
+    | A.Array_f -> L.const_pointer_null void_p
+    | A.Array_s -> L.const_pointer_null void_p
+    | A.Array_i -> L.const_pointer_null void_p
+  in
   (* Declare each global variable; remember its value in a map *)
   let global_vars =
     let global_var m (t, n) =
-      let init = L.const_int (ltype_of_typ t) 0
+      let init = global_init t in
       in StringMap.add n (L.define_global n init the_module) m in
     List.fold_left global_var StringMap.empty globals in
 
@@ -53,7 +71,25 @@ let translate (globals, functions) =
 
   let printbig_t = L.function_type i32_t [| i32_t |] in
   let printbig_func = L.declare_function "printbig" printbig_t the_module in
+  
+  let strlen_t = L.function_type f_t [| str_t |] in
+  let strlen_func = L.declare_function "strlen2" strlen_t the_module in
+  
+  let create_t = L.function_type void_p [||] in
+  let create_func = L.declare_function "create" create_t the_module in
+ 
+  let array_add_string_t = L.function_type i32_t [|void_p ; str_t ; str_t|] in
+  let array_add_string_func = L.declare_function "array_add_string" array_add_string_t the_module in
 
+  let array_retrieve_string_t = L.function_type str_t [|void_p ; str_t|] in
+  let array_retrieve_string_func = L.declare_function "array_retrieve_string" array_retrieve_string_t the_module in
+
+  let array_add_float_t = L.function_type i32_t [|void_p ; str_t ; f_t|] in
+  let array_add_float_func = L.declare_function "array_add_float" array_add_float_t the_module in
+
+  let array_retrieve_float_t = L.function_type f_t [|void_p ; str_t|] in
+  let array_retrieve_float_func = L.declare_function "array_retrieve_float" array_retrieve_float_t the_module in
+  
   (* Define each function (arguments and return type) so we can 
    * define it's body and call it later *)
   let function_decls =
@@ -71,7 +107,10 @@ let translate (globals, functions) =
     let builder = L.builder_at_end context (L.entry_block the_function) in
 
     let int_format_str = L.build_global_stringptr "%d\n" "fmt" builder
-    and float_format_str = L.build_global_stringptr "%g\n" "fmt" builder in
+    and string_format_str = L.build_global_stringptr "%s\n" "fmt2" builder 
+    and float_format_str = L.build_global_stringptr "f\n" "fmt3" builder
+    in
+    
 
     (* Construct the function's "locals": formal arguments and locally
        declared variables.  Allocate each on the stack, initialize their
@@ -101,6 +140,13 @@ let translate (globals, functions) =
     let lookup n = try StringMap.find n local_vars
                    with Not_found -> StringMap.find n global_vars
     in
+
+    let build_string e builder = 
+        let str = L.build_global_stringptr e "str" builder in
+        let null = L.const_int i32_t 0 in
+    L.build_in_bounds_gep str [| null |] "str" builder in
+
+    (* This is where GM left at Fri. 8:05 PM *)
 
     (* Construct code for an expression; return its value *)
     let rec expr builder (_, e) = match e with
