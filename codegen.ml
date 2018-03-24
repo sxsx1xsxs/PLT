@@ -44,7 +44,7 @@ let translate (globals, functions) =
     | A.String_t -> str_t
     | A.Float -> float_t
     | A.Void  -> void_t
-    | A.Char  -> i8_t
+    (*| A.Char  -> i8_t*)
     | A.Array_f -> void_p
     | A.Array_s -> void_p
   in
@@ -52,7 +52,7 @@ let translate (globals, functions) =
   let rec global_init = function
     | A.Int -> L.const_int i32_t 0
     | A.Bool -> L.const_int i1_t 0
-    | A.Char -> L.const_int i8_t 0
+    (*| A.Char -> L.const_int i8_t 0*)
     | A.String_t -> L.const_pointer_null str_t
     | A.Void -> L.const_int void_t 0
     | A.Float -> L.const_float float_t 0.0
@@ -113,17 +113,16 @@ let translate (globals, functions) =
     and float_format_str = L.build_global_stringptr "f\n" "fmt3" builder
     in
     
-
     (* Construct the function's "locals": formal arguments and locally
        declared variables.  Allocate each on the stack, initialize their
        value, if appropriate, and remember their values in the "locals" map *)
     let local_vars =
       let add_formal m (t, n) p = 
         let () = L.set_value_name n p in
-	let local = L.build_alloca (ltype_of_typ t) n builder in
+        let local = L.build_alloca (ltype_of_typ t) n builder in
         let _  = L.build_store p local builder in
 	StringMap.add n local m 
-      in
+    in
 
       (* Allocate space for any locally declared variables and add the
        * resulting registers to our map *)
