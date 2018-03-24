@@ -35,6 +35,7 @@ let void_p     = L.pointer_type i8_t;;
 let str_t      = L.pointer_type i8_t;;
 let arr_t      = L.i64_type context;;
 
+
 let translate (globals, functions) =
   (* Convert MicroC types to LLVM types *)
   let ltype_of_typ = function
@@ -59,6 +60,7 @@ let translate (globals, functions) =
     | A.Array_s -> L.const_pointer_null void_p
     | A.Array_i -> L.const_pointer_null void_p
   in
+
   (* Declare each global variable; remember its value in a map *)
   let global_vars =
     let global_var m (t, n) =
