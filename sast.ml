@@ -6,11 +6,11 @@ type sexpr = typ * sx
 and sx = 
 	SLiteral of int               | SBoolLit of bool
 	| SFliteral of float          | SId of string
-	| SSliteral of string         | SBinop of expr * op * expr 
-	| SUnop of uop * expr         | SAssign of string * expr   
-	| SCall of string * expr list | SNoexpr
-	| SRetrieve of string * expr
-	| SArray_Assign of string * expr * expr
+	| SSliteral of string         | SBinop of sexpr * op * sexpr 
+	| SUnop of uop * sexpr         | SAssign of string * sexpr   
+	| SCall of string * sexpr list | SNoexpr
+	| SRetrieve of string * sexpr
+	| SArray_Assign of string * sexpr * sexpr
 	| SArray_F_Lit of (string * float) list 
 	| SArray_S_Lit of (string * string) list
 	| SArray_I_Lit of (string * int) list
@@ -25,7 +25,7 @@ type sinit = typ * string * sexpr
 type svar_decl = {
 	svtyp  : typ;
 	svname : string;
-	svexpr : sexpr;
+        svexpr : sexpr;
 }
 
 type sfunc_decl = {
