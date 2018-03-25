@@ -1,6 +1,6 @@
 /* Ocamlyacc parser for OpenFile
 This code was original from MicroC and modified by:
-Guanming Qiao; Binwei Xu; Yi Zhang; Chunlin Zhu; Xinjian Wu*/
+Guanming Qiao; Binwei Xu; Yi Zhang; Chunlin Zhu; Xinjian Wu */
 
 %{
 open Ast
@@ -14,6 +14,7 @@ let quote_remover a = String.sub a 1 ((String.length a) - 2);;
 %token RAPPEND LAPPEND LR RL AND OR NOT
 %token REGEX EOF ASSIGN 
 %token RETURN BOOL VOID FLOAT STRING INT
+%token ARRAY_F ARRAY_S ARRAY_I
 %token <string> ID REGEX_STRING STRING_T
 %token <int> INT_T
 %token <float> FLOAT_T
@@ -34,20 +35,18 @@ let quote_remover a = String.sub a 1 ((String.length a) - 2);;
 
 /*functions are */
 program:
-    fdecl_list rule_list EOF { {decls = List.rev $1; rules= List.rev $2 } }
+    { [], [] }
+    | program vdecl    { ($2 :: fst $1), snd $1 }
+    | program fdecl    { fst $1, ($2 :: snd $1) }
 
 /* start of decls */
-fdecl_list:
-    /* nothing */  { [] }
-    | fdecl_list fdecl { $2 :: $1 }
-
 fdecl:
     typ ID LPR formals_opt RPR LBC vdecl_list stmt_list RBC
-    { { typ = $1;
-    fname = $2;
-    formals = $4;
-    locals = List.rev $7;
-    body = List.rev $8 } }
+    { { ftyp = $1;
+        fname = $2;
+        formals = $4;
+        locals = List.rev $7;
+        body = List.rev $8 } }
 
 typ:
     | VOID { Void }
@@ -55,26 +54,26 @@ typ:
     | FLOAT { Float }
     | BOOL { Bool }
     | INT { Int }
+    | ARRAY_F { Array_f }
+    | ARRAY_S { Array_s }
+    | ARRAY_I { Array_i}
 
 formals_opt:
-                 { [] }
- | formal_list   { List.rev $1 }
+                    { [] }
+    | formal_list   { List.rev $1 }
  
 formal_list:
-    typ ID { [($1,$2)] }
-    | formal_list COMMA typ ID { ($3,$4) :: $1 }
+    typ ID                   { [{vtyp = $1; vname = $2; vexpr = Noexpr}] }
+    | formal_list COMMA typ ID { {vtyp = $3; vname = $4; vexpr = Noexpr} :: $1 }
+
 
 vdecl_list:
-    { [] }
+                       { [] }
     | vdecl_list vdecl { $2 :: $1 }
 
-vdecl: 
-    typ ID assign_opt SEMI { ($1, $2, $3) }
-
-/*Initialize a variable upon declaration */
-assign_opt:
-    { Noexpr }
-    | ASSIGN expr { $2 }
+vdecl:
+    typ ID SEMI { {vtyp = $1; vname = $2; vexpr = Noexpr} }
+    | typ ID ASSIGN expr SEMI { {vtyp = $1; vname = $2; vexpr = $4} }
 
 /* end of decls */
 
@@ -114,6 +113,9 @@ expr:
     | FLOAT_T            { Fliteral($1) }
     | INT_T              { Literal($1)  }
     | ID               { Id($1) }
+    | LBK kvps_f RBK { Array_F_Lit($2) }
+    | LBK kvps_s RBK { Array_S_Lit($2) }
+    | LBK kvps_i RBK { Array_I_Lit($2) }
     | expr PLUS   expr { Binop($1, Add,   $3) }
     | expr MINUS  expr { Binop($1, Sub,   $3) }
     | expr TIMES  expr { Binop($1, Mult,  $3) }
@@ -130,8 +132,29 @@ expr:
     | NOT expr         { Unop(Not, $2) }
     | ID ASSIGN expr   { Assign($1, $3) }
     | LBK RBK          { Call("create", []) }
+    | ID LBK expr RBK { Retrieve($1, $3)}
+    | ID LBK expr RBK ASSIGN expr { Array_Assign($1, $3, $6)}
     | ID LPR args_opt RPR { Call($1, $3) }
     | LPR expr RPR     { $2 }
+
+kvps_f:
+    kvp_f        { [$1] }
+    | kvps_f COMMA kvp_f { $3 :: $1 }
+
+kvps_s:
+    kvp_s        { [$1] }
+    | kvps_s COMMA kvp_s { $3 :: $1 }
+
+kvps_i:
+    kvp_i        { [$1] }
+    | kvps_i COMMA kvp_i { $3 :: $1 }
+
+kvp_f:
+    STRING_T ASSIGN FLOAT_T { $1, $3 }
+kvp_s:
+    STRING_T ASSIGN STRING_T { $1, $3 }
+kvp_i:
+    STRING_T ASSIGN INT_T { $1, $3 }
 
 args_opt:
     { [] }
