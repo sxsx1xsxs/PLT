@@ -154,13 +154,14 @@ let printf_t = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
 	Literal i -> L.const_int i32_t i
       | BoolLit b -> L.const_int i1_t (if b then 1 else 0)
       | Fliteral l -> L.const_float_of_string float_t l
+      | Sliteral s -> build_string s builder
       | Noexpr -> L.const_int i32_t 0
       | Id s -> L.build_load (lookup s) s builder
       | Binop (e1, op, e2) ->
 	  let (t, _) = e1
 	  and e1' = expr builder e1
 	  and e2' = expr builder e2 in
-	  if t = A.Float then (match op with 
+	  ( match op with 
 	    A.Add     -> L.build_fadd
 	  | A.Sub     -> L.build_fsub
 	  | A.Mult    -> L.build_fmul
@@ -171,29 +172,15 @@ let printf_t = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
 	  | A.Leq     -> L.build_fcmp L.Fcmp.Ole
 	  | A.Greater -> L.build_fcmp L.Fcmp.Ogt
 	  | A.Geq     -> L.build_fcmp L.Fcmp.Oge
-	  | A.And | A.Or ->
-	      raise (Failure "internal error: semant should have rejected and/or on float")
-	  ) e1' e2' "tmp" builder 
-	  else (match op with
-	  | A.Add     -> L.build_add
-	  | A.Sub     -> L.build_sub
-	  | A.Mult    -> L.build_mul
-          | A.Div     -> L.build_sdiv
 	  | A.And     -> L.build_and
-	  | A.Or      -> L.build_or
-	  | A.Equal   -> L.build_icmp L.Icmp.Eq
-	  | A.Neq     -> L.build_icmp L.Icmp.Ne
-	  | A.Less    -> L.build_icmp L.Icmp.Slt
-	  | A.Leq     -> L.build_icmp L.Icmp.Sle
-	  | A.Greater -> L.build_icmp L.Icmp.Sgt
-	  | A.Geq     -> L.build_icmp L.Icmp.Sge
+      | A.Or      -> L.build_or
 	  ) e1' e2' "tmp" builder
       | Unop(op, e) ->
-	  let (t, _) = e and e' = expr builder e in
+	  let e' = expr builder e in
 	  (match op with
-	    A.Neg when t = A.Float -> L.build_fneg 
 	  | A.Neg                  -> L.build_neg
-          | A.Not                  -> L.build_not) e' "tmp" builder
+      | A.Not                  -> L.build_not) e' "tmp" builder
+      (* GM 12:51 Mar 25 *)
       | Assign (s, e) -> let e' = expr builder e in
                           let _  = L.build_store e' (lookup s) builder in e'
       | Call ("print", [e]) | Call ("printb", [e]) ->
