@@ -139,8 +139,8 @@ let translate (globals, functions) =
     (* Return the value for a variable or formal argument. First check
      * locals, then globals *)
     let lookup n = try StringMap.find n local_vars
-                   with Not_found -> StringMap.find n global_vars
-    in
+                   with Not_found -> StringMap.find n global_vars in
+    let lookup_func n = fst (StringMap.find n function_decls) in
 
     let build_string e builder = 
         let str = L.build_global_stringptr e "str" builder in
