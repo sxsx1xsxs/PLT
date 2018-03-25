@@ -187,10 +187,27 @@ let printf_t = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
 	  L.build_call printf_func [| int_format_str ; (expr builder e) |]
 	    "printf" builder
       | Call ("printbig", [e]) ->
-	  L.build_call printbig_func [| (expr builder e) |] "printbig" builder
+	  L.build_call printbig_func [| (expr builder e) |] 
+    "printbig" builder
       | Call ("printf", [e]) -> 
 	  L.build_call printf_func [| float_format_str ; (expr builder e) |]
 	    "printf" builder
+      (* Add by Chunlin Zhu on Mar 25*)
+      | Call ("strlen", [e]) ->
+    L.build_call strlen_func [|expr builder e|] 
+    "strlen" builder
+      | Call ("array_add_string", [a;b;c]) ->
+    L.build_call array_add_string_func [|(expr builder a) ; (expr builder b) ; (expr builder c)|] 
+    "array_add_string" builder
+      | Call ("array_retrieve_string", [a; b]) ->
+    L.build_call array_retrieve_string_func [|(expr builder a) ; (expr builder b)|]
+    "array_retrieve_string" builder
+      | Call ("array_add_float", [a; b; c]) ->
+    L.build_call array_add_float_func [|(expr builder a) ; (expr builder b) ; (expr builder c)|]
+    "array_add_float" builder
+      | Call ("array_retrieve_float", [a; b]) ->
+    L.build_call array_retrieve_float_func [|(expr builder a) ; (expr builder b)|]
+    "array_retrieve_float" builder
       | Call (f, act) ->
          let (fdef, fdecl) = StringMap.find f function_decls in
 	 let actuals = List.rev (List.map (expr builder) (List.rev act)) in
