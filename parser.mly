@@ -33,15 +33,15 @@ let quote_remover a = String.sub a 1 ((String.length a) - 2);;
 %type <Ast.program> program
 %%
 
-/*functions are */
+/* functions are */
 program:
     { [], [] }
-    | program vdecl    { ($2 :: fst $1), snd $1 }
+    | program bind    { ($2 :: fst $1), snd $1 }
     | program fdecl    { fst $1, ($2 :: snd $1) }
 
 /* start of decls */
 fdecl:
-    typ ID LPR formals_opt RPR LBC vdecl_list stmt_list RBC
+    typ ID LPR vdecl_list RPR LBC vdecl_list stmt_list RBC
     { { ftyp = $1;
         fname = $2;
         formals = $4;
@@ -54,17 +54,17 @@ typ:
     | FLOAT { Float }
     | BOOL { Bool }
     | INT { Int }
-    | ARRAY_F { Array_f }
+    /*| ARRAY_F { Array_f }
     | ARRAY_S { Array_s }
-    | ARRAY_I { Array_i}
+    | ARRAY_I { Array_i}*/
 
-formals_opt:
+/* formals_opt:
                     { [] }
-    | formal_list   { List.rev $1 }
+    | vdecl_list   { List.rev $1 }*/
  
-formal_list:
-    typ ID                   { [{vtyp = $1; vname = $2; vexpr = Noexpr}] }
-    | formal_list COMMA typ ID { {vtyp = $3; vname = $4; vexpr = Noexpr} :: $1 }
+/* formal_list:
+    typ ID                   { [($1, $2, Noexpr)] }
+    | formal_list COMMA typ ID { {($3,$4,Noexpr) :: $1 } */
 
 
 vdecl_list:
@@ -72,8 +72,11 @@ vdecl_list:
     | vdecl_list vdecl { $2 :: $1 }
 
 vdecl:
-    typ ID SEMI { {vtyp = $1; vname = $2; vexpr = Noexpr} }
-    | typ ID ASSIGN expr SEMI { {vtyp = $1; vname = $2; vexpr = $4} }
+    typ ID SEMI { ($1, $2, Noexpr) }
+    | typ ID ASSIGN expr SEMI { ($1, $2, $4) }
+
+bind:
+    typ ID SEMI { ($1, $2) }
 
 /* end of decls */
 
@@ -113,9 +116,9 @@ expr:
     | FLOAT_T            { Fliteral($1) }
     | INT_T              { Literal($1)  }
     | ID               { Id($1) }
-    | LBK kvps_f RBK { Array_F_Lit($2) }
+    /*| LBK kvps_f RBK { Array_F_Lit($2) }
     | LBK kvps_s RBK { Array_S_Lit($2) }
-    | LBK kvps_i RBK { Array_I_Lit($2) }
+    | LBK kvps_i RBK { Array_I_Lit($2) }*/
     | expr PLUS   expr { Binop($1, Add,   $3) }
     | expr MINUS  expr { Binop($1, Sub,   $3) }
     | expr TIMES  expr { Binop($1, Mult,  $3) }

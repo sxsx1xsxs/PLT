@@ -16,9 +16,9 @@ things related to regex and array implementation
 2.How to compile and execute the compiler:
 First edit the test.of file for your test, "of" standing for OpenFile file.
 Then run:
-    ocamlbuild -clean toplevel.native
-    ocamlbuild toplevel.native
-    ./toplevel.native test.of
+    ocamlbuild -clean openFile.native
+    ocamlbuild openFile.native
+    ./openFile.native test.of
 The last execution should print a "it passes" if it passes. 
 Error states will cause the parser to backtrack and die. 
 
@@ -40,3 +40,10 @@ To disable printing of state transitions when parsing, run
 To reenable it, run 
     export OCAMLRUNPARAM='p'
 To generate new .output file for parser, use ocamlyacc -v parser.mly
+
+To run test for print function:
+        make all
+        ./openFile.native tests/test_print_2.of > test.ir
+        llc-3.7 test.ir
+        gcc -o test test.ir.s
+        ./test
