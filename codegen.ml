@@ -67,10 +67,7 @@ let translate (globals, functions) =
       StringMap.add n (L.define_global n init the_module) m in
     List.fold_left global_var StringMap.empty globals in
 
-  let prints_t = L.var_arg_function_type i32_t [| str_t |] in
-  let prints_func = L.declare_function "prints" prints_t the_module in
-
-  let printf_t = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
+  let printf_t = L.var_arg_function_type i32_t [| str_t |] in
   let printf_func = L.declare_function "printf" printf_t the_module in
 
   let printbig_t = L.function_type i32_t [| i32_t |] in
@@ -193,14 +190,13 @@ let translate (globals, functions) =
             "array_add_float" builder
       | Assign (s, e) -> let e' = expr builder e in
                           let _  = L.build_store e' (lookup s) builder in e'
-      | Call ("prints", [_]) -> L.build_call prints_func [| str_format_str |] "prints" builder
-      | Call ("printc", [e]) -> L.build_call printf_func [| char_format_str; (expr builder e)|] "printf" builder
+      (*| Call ("prints", [_]) -> L.build_call prints_func [| str_format_str |] "prints" builder*)
+      | Call ("prints", [e]) -> L.build_call printf_func [| char_format_str; (expr builder e)|] "printf" builder
       | Call ("print", [e]) | Call ("printb", [e]) ->
 	  L.build_call printf_func [| int_format_str ; (expr builder e) |]
 	    "printf" builder
       | Call ("printbig", [e]) ->
-	  L.build_call printbig_func [| (expr builder e) |] 
-    "printbig" builder
+	  L.build_call printbig_func [| (expr builder e) |] "printbig" builder
       | Call ("printf", [e]) -> 
 	  L.build_call printf_func [| float_format_str ; (expr builder e) |]
 	    "printf" builder

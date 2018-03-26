@@ -1,0 +1,28 @@
+; ModuleID = 'OpenFile'
+
+@fmt = private unnamed_addr constant [4 x i8] c"%s\0A\00"
+@fmt.1 = private unnamed_addr constant [4 x i8] c"%s\0A\00"
+@fmt.2 = private unnamed_addr constant [4 x i8] c"%d\0A\00"
+@fmt.3 = private unnamed_addr constant [3 x i8] c"f\0A\00"
+
+declare i32 @printf(i8*, ...)
+
+declare i32 @printbig(i32)
+
+declare double @strlen(i8*)
+
+declare i32 @array_add_string(i8*, i8*, i8*)
+
+declare i8* @array_retrieve_string(i8*, i8*)
+
+declare i32 @array_add_float(i8*, i8*, double)
+
+declare double @array_retrieve_float(i8*, i8*)
+
+define i32 @main() {
+entry:
+  %s = alloca i8*
+  %s1 = load i8*, i8** %s
+  %printf = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @fmt.1, i32 0, i32 0), i8* %s1)
+  ret i32 0
+}
