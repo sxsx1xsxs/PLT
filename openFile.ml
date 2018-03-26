@@ -12,7 +12,7 @@ let () =
     let lexbuf = Lexing.from_channel !channel in
     let ast = Parser.program Scanner.next_token lexbuf in
 
-    match action with
+    match !action with
     Ast -> print_string (Ast.string_of_program ast)
     |Compile -> 
 (*     	let sast = Semant.convert ast in *)
