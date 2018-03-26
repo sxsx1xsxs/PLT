@@ -13,23 +13,17 @@ type expr = Literal of int             | BoolLit of bool
           | Call of string * expr list | Noexpr
           | Retrieve of string * expr
           | Array_Assign of string * expr * expr
-          | Array_F_Lit of (string * float) list 
+(*           | Array_F_Lit of (string * float) list 
           | Array_S_Lit of (string * string) list
-          | Array_I_Lit of (string * int) list
+          | Array_I_Lit of (string * int) list *)
 
 type stmt = Block of stmt list | Expr of expr | Return of expr
           | If of expr * stmt * stmt | While of expr * stmt
           | For of expr * expr * expr * stmt
 
-type init = typ * string * expr
-
 (* type decl = var_decl list | func_decl list *)
 
-type var_decl = {
-        vtyp  : typ;
-        vname : string;
-        vexpr : expr;
-}
+type var_decl = typ * string * expr
 
 type func_decl = {
         ftyp    : typ;
@@ -45,6 +39,6 @@ type pattern = RegexPattern of string
 
 type rule = pattern * action
 
-type program = var_decl list * func_decl list
+type program = bind list * func_decl list
 
 let string_of_program input_program = "it passes\n"
