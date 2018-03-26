@@ -27,4 +27,6 @@ To generate new .output file for parser, use ocamlyacc -v parser.mly
 To run test for print function:
         make all
         ./openFile.native tests/test_print_2.of > test.ir
-        
+        llc-3.7 test.ir
+        gcc -o test test.ir.s
+        ./test
