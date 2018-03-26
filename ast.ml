@@ -3,7 +3,7 @@
 
 type op = Add | Sub | Mult | Div | Equal | Neq | Less | Leq | Greater | Geq | And | Or
 type uop = Neg | Not
-type typ = Int | Bool | Float | Void | String | Array_f | Array_s | Array_i
+type typ = Int | Bool | Float | Void | String (* | Array_f | Array_s | Array_i *)
 type bind = typ * string
 
 type expr = Literal of int             | BoolLit of bool

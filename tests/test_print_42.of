@@ -1,0 +1,4 @@
+
+int main() {
+printb(42);
+}

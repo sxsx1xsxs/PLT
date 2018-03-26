@@ -1,10 +1,7 @@
 type action = Ast | Compile
 
 let () =
-	let action = if Array.length Sys.argv > 1 then
-		List.assoc Sys.argv.(1) [ ("-a", Ast);
-									("-c", Compile)]
-	else Compile in
+	let action = Compile in
 
     let usage_msg = "usage: ./openFile.native [file.of]" in
     let channel = ref stdin in

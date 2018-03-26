@@ -19,24 +19,24 @@ open Ast
 
 module StringMap = Map.Make(String)
 
-(* Code Generation from the SAST. Returns an LLVM module if successful,
-   throws an exception if something is wrong. *)
-let context    = L.global_context () ;;
-let the_module = L.create_module context "OpenFile"
-(* Add types to the context so we can use them in our LLVM code *)
-  
-let i32_t      = L.i32_type    context
-and i8_t       = L.i8_type     context
-and i1_t       = L.i1_type     context
-and float_t    = L.double_type context
-and void_t     = L.void_type   context;;
-
-let void_p     = L.pointer_type i8_t;;
-let str_t      = L.pointer_type i8_t;;
-let arr_t      = L.i64_type context;;
-
 
 let translate (globals, functions) =
+    (* Code Generation from the SAST. Returns an LLVM module if successful,
+     throws an exception if something is wrong. *)
+  let context    = L.global_context () in
+  let the_module = L.create_module context "OpenFile" in
+  (* Add types to the context so we can use them in our LLVM code *)
+    
+  let i32_t      = L.i32_type    context
+  and i8_t       = L.i8_type     context
+  and i1_t       = L.i1_type     context
+  and float_t    = L.double_type context
+  and void_t     = L.void_type   context in
+
+  let void_p     = L.pointer_type i8_t
+  and str_t      = L.pointer_type i8_t in
+  (* and arr_t      = L.i64_type context in *)
+
   (* Convert MicroC types to LLVM types *)
   let ltype_of_typ = function
       A.Int   -> i32_t
@@ -44,24 +44,24 @@ let translate (globals, functions) =
     | A.String -> str_t
     | A.Float -> float_t
     | A.Void  -> void_t
-    | A.Array_f -> void_p
+    (* | A.Array_f -> void_p
     | A.Array_s -> void_p
-    | A.Array_i -> void_p
+    | A.Array_i -> void_p *)
   in
-  
+
   let global_init = function
     | A.Int -> L.const_int i32_t 0
     | A.Bool -> L.const_int i1_t 0
     | A.String -> L.const_pointer_null str_t
     | A.Void -> L.const_int void_t 0
     | A.Float -> L.const_float float_t 0.0
-    | A.Array_f -> L.const_pointer_null void_p
+    (* | A.Array_f -> L.const_pointer_null void_p
     | A.Array_s -> L.const_pointer_null void_p
-    | A.Array_i -> L.const_pointer_null void_p
+    | A.Array_i -> L.const_pointer_null void_p *)
   in
 
   (* Declare each global variable; remember its value in a map *)
-  let global_vars =
+  let global_vars = 
     let global_var m (t, n) =
       let init = global_init t in
       StringMap.add n (L.define_global n init the_module) m in
@@ -91,15 +91,6 @@ let printf_t = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
   let array_retrieve_float_t = L.function_type float_t [|void_p ; str_t|] in
   let array_retrieve_float_func = L.declare_function "array_retrieve_float" array_retrieve_float_t the_module in
   
-  (* Define each function (arguments and return type) so we can 
-   * define it's body and call it later *)
-  (* let var_decls = 
-    let variable_decl m vdecl = 
-      let vname = vdecl.vname
-      and vexpr = vdecl.vexpr in
-      let vtype = L.struct_type context  in
-      StringMap.add vname (L.define_global vname  the_module) vm in 
-    List.fold_left variable_decl StringMap.empty globals in *)
   let function_decls =
     let function_decl m fdecl =
       let name = fdecl.fname
@@ -111,12 +102,14 @@ let printf_t = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
   
   (* Fill in the body of the given function *)
   let build_function_body fdecl =
-    let (the_function, _) = StringMap.find fdecl.fname function_decls in
+    let (the_function, _) = try StringMap.find fdecl.fname function_decls 
+  with Not_found -> raise (Failure "115")
+  in
     let builder = L.builder_at_end context (L.entry_block the_function) in
-
-    let int_format_str = L.build_global_stringptr "%d\n" "fmt" builder
+    let char_format_str = L.build_global_stringptr "%s\n" "fmt" builder
+    and int_format_str = L.build_global_stringptr "%d\n" "fmt" builder
     (* and string_format_str = L.build_global_stringptr "%s\n" "fmt2" builder *) 
-    and float_format_str = L.build_global_stringptr "f\n" "fmt3" builder
+    and float_format_str = L.build_global_stringptr "f\n" "fmt" builder
     in
     
     (* Construct the function's "locals": formal arguments and locally
@@ -145,7 +138,10 @@ let printf_t = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
     (* Return the value for a variable or formal argument. First check
      * locals, then globals *)
     let lookup n = try StringMap.find n local_vars
-                   with Not_found -> StringMap.find n global_vars in
+                   with Not_found -> 
+                        try StringMap.find n global_vars with
+                          Not_found -> raise (Failure "150")
+                      in
     (* let lookup_func n = fst (StringMap.find n function_decls) in *)
 
     let build_string e builder = 
@@ -193,6 +189,7 @@ let printf_t = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
             "array_add_float" builder
       | Assign (s, e) -> let e' = expr builder e in
                           let _  = L.build_store e' (lookup s) builder in e'
+      | Call ("prints", [e]) -> L.build_call printf_func [| char_format_str; (expr builder e)|] "printf" builder
       | Call ("print", [e]) | Call ("printb", [e]) ->
 	  L.build_call printf_func [| int_format_str ; (expr builder e) |]
 	    "printf" builder
@@ -219,7 +216,9 @@ let printf_t = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
     L.build_call array_retrieve_float_func [|(expr builder a) ; (expr builder b)|]
     "array_retrieve_float" builder
       | Call (f, act) ->
-         let (fdef, fdecl) = StringMap.find f function_decls in
+         let (fdef, fdecl) = try StringMap.find f function_decls with
+                              Not_found -> raise (Failure "223")
+          in
 	 let actuals = List.rev (List.map (expr builder) (List.rev act)) in
 	 let result = (match fdecl.ftyp with 
                         A.Void -> ""
