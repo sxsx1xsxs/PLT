@@ -67,14 +67,17 @@ let translate (globals, functions) =
       StringMap.add n (L.define_global n init the_module) m in
     List.fold_left global_var StringMap.empty globals in
 
-let printf_t = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
+  let prints_t = L.var_arg_function_type i32_t [| str_t |] in
+  let prints_func = L.declare_function "prints" prints_t the_module in
+
+  let printf_t = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
   let printf_func = L.declare_function "printf" printf_t the_module in
 
   let printbig_t = L.function_type i32_t [| i32_t |] in
   let printbig_func = L.declare_function "printbig" printbig_t the_module in
   
   let strlen_t = L.function_type float_t [| str_t |] in
-  let strlen_func = L.declare_function "strlen2" strlen_t the_module in
+  let strlen_func = L.declare_function "strlen" strlen_t the_module in
   
   (* let create_t = L.function_type void_p [||] in
   let create_func = L.declare_function "create" create_t the_module in
@@ -106,7 +109,8 @@ let printf_t = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
   with Not_found -> raise (Failure "115")
   in
     let builder = L.builder_at_end context (L.entry_block the_function) in
-    let char_format_str = L.build_global_stringptr "%s\n" "fmt" builder
+    let str_format_str = L.build_global_stringptr "%s\n" "fmt" builder
+    and char_format_str = L.build_global_stringptr "%s\n" "fmt" builder
     and int_format_str = L.build_global_stringptr "%d\n" "fmt" builder
     (* and string_format_str = L.build_global_stringptr "%s\n" "fmt2" builder *) 
     and float_format_str = L.build_global_stringptr "f\n" "fmt" builder
@@ -182,14 +186,15 @@ let printf_t = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
 	  (match op with
 	  | A.Neg                  -> L.build_neg
       | A.Not                  -> L.build_not) e' "tmp" builder
-      (* GM 12:51 Mar 25 *)
+      
       (* assume only float need semantic checking *)
       | Retrieve (s, e) -> L.build_call array_retrieve_float_func [|(L.build_load (lookup s) s builder) ; (expr builder e)|] "array_retrieve" builder
       | Array_Assign (s, i, e) -> L.build_call array_add_float_func [|(L.build_load (lookup s) s builder) ; (expr builder i) ; (expr builder e)|]
             "array_add_float" builder
       | Assign (s, e) -> let e' = expr builder e in
                           let _  = L.build_store e' (lookup s) builder in e'
-      | Call ("prints", [e]) -> L.build_call printf_func [| char_format_str; (expr builder e)|] "printf" builder
+      | Call ("prints", [_]) -> L.build_call prints_func [| str_format_str |] "prints" builder
+      | Call ("printc", [e]) -> L.build_call printf_func [| char_format_str; (expr builder e)|] "printf" builder
       | Call ("print", [e]) | Call ("printb", [e]) ->
 	  L.build_call printf_func [| int_format_str ; (expr builder e) |]
 	    "printf" builder
@@ -199,7 +204,6 @@ let printf_t = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
       | Call ("printf", [e]) -> 
 	  L.build_call printf_func [| float_format_str ; (expr builder e) |]
 	    "printf" builder
-      (* Add by Chunlin Zhu on Mar 25*)
       | Call ("strlen", [e]) ->
     L.build_call strlen_func [|expr builder e|] 
     "strlen" builder
