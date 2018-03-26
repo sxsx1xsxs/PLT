@@ -28,6 +28,13 @@ Error states will cause the parser to backtrack and die.
 expected result. After running this, you should see the prompt "The result matches what we expected" for all 10 test cases with the output of each test cases, which means the 5 positive tests all pass and the 5 negative tests all fail. 
 
 
+4. How to run print functions:
+        make all
+        ./openFile.native tests/test_print_2.of > test.ir
+        llc-3.7 test.ir
+        gcc -o test test.ir.s
+        ./test
+
 
 
 
