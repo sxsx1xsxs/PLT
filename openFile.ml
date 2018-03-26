@@ -1,7 +1,7 @@
 type action = Ast | Compile
 
 let () =
-	let action = Compile in
+    let action = Compile in
 
     let usage_msg = "usage: ./openFile.native [file.of]" in
     let channel = ref stdin in
