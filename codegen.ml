@@ -176,20 +176,20 @@ let translate (globals, functions) =
 	  | A.Greater -> L.build_fcmp L.Fcmp.Ogt
 	  | A.Geq     -> L.build_fcmp L.Fcmp.Oge
 	  | A.And     -> L.build_and
-    | A.Or      -> L.build_or
+          | A.Or      -> L.build_or
 	  ) e1' e2' "tmp" builder
       | Unop(op, e) ->
 	  let e' = expr builder e in
 	  (match op with
 	  | A.Neg                  -> L.build_neg
-      | A.Not                  -> L.build_not) e' "tmp" builder
+          | A.Not                  -> L.build_not) e' "tmp" builder
       
       (* assume only float need semantic checking *)
       | Retrieve (s, e) -> L.build_call array_retrieve_float_func [|(L.build_load (lookup s) s builder) ; (expr builder e)|] "array_retrieve" builder
       | Array_Assign (s, i, e) -> L.build_call array_add_float_func [|(L.build_load (lookup s) s builder) ; (expr builder i) ; (expr builder e)|]
             "array_add_float" builder
       | Assign (s, e) -> let e' = expr builder e in
-                          let _  = L.build_store e' (lookup s) builder in e'
+                         let _  = L.build_store e' (lookup s) builder in e'
       (*| Call ("prints", [_]) -> L.build_call prints_func [| str_format_str |] "prints" builder*)
       | Call ("prints", [e]) -> L.build_call printf_func [| char_format_str; (expr builder e)|] "printf" builder
       | Call ("print", [e]) | Call ("printb", [e]) ->
