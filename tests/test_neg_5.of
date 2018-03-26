@@ -1,16 +1,8 @@
 /*negative test*/
-/*assigning a string to an integer*/
+/*Weird variable type*/
 
-int gcd (int a, int b)
+int WeirdVariableType (int a, string b)
 {
-    if (a != b) { 
-        if (a > b) {
-            a = "hi";
-        }
-        else { 
-            b = b - a;
-        }
-    return a;
-    }
+    Boom c = a + b;
 }
 
