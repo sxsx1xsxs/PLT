@@ -106,8 +106,8 @@ let translate (globals, functions) =
   with Not_found -> raise (Failure "115")
   in
     let builder = L.builder_at_end context (L.entry_block the_function) in
-    let str_format_str = L.build_global_stringptr "%s\n" "fmt" builder
-    and char_format_str = L.build_global_stringptr "%s\n" "fmt" builder
+    (*let str_format_str = L.build_global_stringptr "%s\n" "fmt" builder*)
+    let char_format_str = L.build_global_stringptr "%s\n" "fmt" builder
     and int_format_str = L.build_global_stringptr "%d\n" "fmt" builder
     (* and string_format_str = L.build_global_stringptr "%s\n" "fmt2" builder *) 
     and float_format_str = L.build_global_stringptr "f\n" "fmt" builder
@@ -154,7 +154,7 @@ let translate (globals, functions) =
 
     (* Construct code for an expression; return its value *)
     let rec expr builder = function
-	   Literal i -> L.const_int i32_t i
+        Literal i -> L.const_int i32_t i
       | BoolLit b -> L.const_int i1_t (if b then 1 else 0)
       | Fliteral l -> L.const_float float_t l
       | Sliteral s -> build_string s builder
