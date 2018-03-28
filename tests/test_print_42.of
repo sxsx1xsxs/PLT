@@ -1,4 +1,5 @@
-
+int a;
 int main() {
-printb(42);
+    a = 42;
+    printb(a);
 }

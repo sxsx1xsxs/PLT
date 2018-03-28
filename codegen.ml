@@ -50,7 +50,7 @@ let translate (globals, functions) =
   in
 
   let global_init = function
-    | A.Int -> L.const_int i32_t 0
+    | A.Int -> L.const_int i32_t 666
     | A.Bool -> L.const_int i1_t 0
     | A.String -> L.const_pointer_null str_t
     | A.Void -> L.const_int void_t 0
@@ -62,7 +62,7 @@ let translate (globals, functions) =
 
   (* Declare each global variable; remember its value in a map *)
   let global_vars = 
-    let global_var m (t, n) =
+    let global_var m (t, n, _) =
       let init = global_init t in
       StringMap.add n (L.define_global n init the_module) m in
     List.fold_left global_var StringMap.empty globals in
