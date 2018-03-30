@@ -1,0 +1,8 @@
+/*negative test*/
+/*Weird variable type*/
+
+int WeirdVariableType (int a, string b)
+{
+    Boom c = a + b;
+}
+
