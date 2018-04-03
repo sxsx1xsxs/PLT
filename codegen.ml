@@ -37,7 +37,7 @@ let translate (globals, functions) =
   and str_t      = L.pointer_type i8_t in
   (* and arr_t      = L.i64_type context in *)
 
-  (* Convert MicroC types to LLVM types *)
+  (* Convert OpenFile types to LLVM types *)
   let ltype_of_typ = function
       A.Int   -> i32_t
     | A.Bool  -> i1_t
@@ -49,10 +49,20 @@ let translate (globals, functions) =
     | A.Array_i -> void_p *)
   in
 
-  let global_init = function
+  let global_init_expr = function
+      A.Literal i -> L.const_int i32_t i
+    | A.BoolLit b -> L.const_int i1_t (if b then 1 else 0)
+    | A.Sliteral s -> let l = L.define_global "" (L.const_stringz context s) the_module in 
+    L.const_bitcast (L.const_gep l [| L.const_int i32_t 0|]) str_t
+    | A.FLiteral f -> L.const_float float_t f
+    | A.Noexpr -> L.const_int i32_t 0
+    | _ -> raise (Failure ("not found"))
+  in
+
+  let global_init_noexpr = function
     | A.Int -> L.const_int i32_t 0
     | A.Bool -> L.const_int i1_t 0
-    | A.String -> L.const_pointer_null str_t
+    | A.String -> global_init_expr(A.Sliteral "")
     | A.Void -> L.const_int void_t 0
     | A.Float -> L.const_float float_t 0.0
     (* | A.Array_f -> L.const_pointer_null void_p
@@ -62,8 +72,8 @@ let translate (globals, functions) =
 
   (* Declare each global variable; remember its value in a map *)
   let global_vars = 
-    let global_var m (t, n) =
-      let init = global_init t in
+    let global_var m (t, n, e) =
+      let init = global_init_expr e in
       StringMap.add n (L.define_global n init the_module) m in
     List.fold_left global_var StringMap.empty globals in
 
@@ -126,7 +136,11 @@ let translate (globals, functions) =
 
       (* Allocate space for any locally declared variables and add the
        * resulting registers to our map *)
-      let add_local m (t, n, _) =
+      let add_local m (t, n, e) =
+        let e' = match e with
+            A.Noexpr -> global_init_noexpr t
+            | _ -> expr builder global_init_expr m e
+        in
 	let local_var = L.build_alloca (ltype_of_typ t) n builder
 	in StringMap.add n local_var m 
       in
