@@ -1,0 +1,5 @@
+/* Print "Hello World" positive test */
+string s = "hello world";
+int main() {
+    prints(s);
+}
