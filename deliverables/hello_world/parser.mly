@@ -36,7 +36,7 @@ let quote_remover a = String.sub a 1 ((String.length a) - 2);;
 /* functions are */
 program:
     { [], [] }
-    | program vdecl    { ($2 :: fst $1), snd $1 }
+    | program bind    { ($2 :: fst $1), snd $1 }
     | program fdecl    { fst $1, ($2 :: snd $1) }
 
 /* start of decls */
@@ -74,6 +74,9 @@ vdecl_list:
 vdecl:
     typ ID SEMI { ($1, $2, Noexpr) }
     | typ ID ASSIGN expr SEMI { ($1, $2, $4) }
+
+bind:
+    typ ID SEMI { ($1, $2) }
 
 /* end of decls */
 

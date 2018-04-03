@@ -37,7 +37,7 @@ let translate (globals, functions) =
   and str_t      = L.pointer_type i8_t in
   (* and arr_t      = L.i64_type context in *)
 
-  (* Convert OpenFile types to LLVM types *)
+  (* Convert MicroC types to LLVM types *)
   let ltype_of_typ = function
       A.Int   -> i32_t
     | A.Bool  -> i1_t
@@ -49,21 +49,10 @@ let translate (globals, functions) =
     | A.Array_i -> void_p *)
   in
 
-<<<<<<< HEAD
-  let global_init_expr = function
-      A.Literal i -> L.const_int i32_t i
-    | A.BoolLit b -> L.const_int i1_t (if b then 1 else 0)
-    | A.Sliteral s -> let l = L.define_global "" (L.const_stringz context s) the_module in 
-    L.const_bitcast (L.const_gep l [| L.const_int i32_t 0|]) str_t
-    | A.FLiteral f -> L.const_float float_t f
-    | A.Noexpr -> L.const_int i32_t 0
-    | _ -> raise (Failure ("not found"))
-  in
-
-  let global_init_noexpr = function
+  let global_init = function
     | A.Int -> L.const_int i32_t 0
     | A.Bool -> L.const_int i1_t 0
-    | A.String -> global_init_expr(A.Sliteral "")
+    | A.String -> L.const_pointer_null str_t
     | A.Void -> L.const_int void_t 0
     | A.Float -> L.const_float float_t 0.0
     (* | A.Array_f -> L.const_pointer_null void_p
@@ -73,24 +62,19 @@ let translate (globals, functions) =
 
   (* Declare each global variable; remember its value in a map *)
   let global_vars = 
-<<<<<<< HEAD
-    let global_var m (t, n, e) =
-      let init = global_init_expr e in
-=======
-    let global_var m (t, n, _) =
+    let global_var m (t, n) =
       let init = global_init t in
->>>>>>> a500da8291c30a1167462b77074e98fc2832510b
       StringMap.add n (L.define_global n init the_module) m in
     List.fold_left global_var StringMap.empty globals in
 
-  let printf_t = L.var_arg_function_type i32_t [| str_t |] in
+let printf_t = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
   let printf_func = L.declare_function "printf" printf_t the_module in
 
   let printbig_t = L.function_type i32_t [| i32_t |] in
   let printbig_func = L.declare_function "printbig" printbig_t the_module in
   
   let strlen_t = L.function_type float_t [| str_t |] in
-  let strlen_func = L.declare_function "strlen" strlen_t the_module in
+  let strlen_func = L.declare_function "strlen2" strlen_t the_module in
   
   (* let create_t = L.function_type void_p [||] in
   let create_func = L.declare_function "create" create_t the_module in
@@ -122,7 +106,6 @@ let translate (globals, functions) =
   with Not_found -> raise (Failure "115")
   in
     let builder = L.builder_at_end context (L.entry_block the_function) in
-    (*let str_format_str = L.build_global_stringptr "%s\n" "fmt" builder*)
     let char_format_str = L.build_global_stringptr "%s\n" "fmt" builder
     and int_format_str = L.build_global_stringptr "%d\n" "fmt" builder
     (* and string_format_str = L.build_global_stringptr "%s\n" "fmt2" builder *) 
@@ -142,11 +125,7 @@ let translate (globals, functions) =
 
       (* Allocate space for any locally declared variables and add the
        * resulting registers to our map *)
-      let add_local m (t, n, e) =
-        let e' = match e with
-            A.Noexpr -> global_init_noexpr t
-            | _ -> expr builder global_init_expr m e
-        in
+      let add_local m (t, n, _) =
 	let local_var = L.build_alloca (ltype_of_typ t) n builder
 	in StringMap.add n local_var m 
       in
@@ -174,7 +153,7 @@ let translate (globals, functions) =
 
     (* Construct code for an expression; return its value *)
     let rec expr builder = function
-        Literal i -> L.const_int i32_t i
+	   Literal i -> L.const_int i32_t i
       | BoolLit b -> L.const_int i1_t (if b then 1 else 0)
       | Fliteral l -> L.const_float float_t l
       | Sliteral s -> build_string s builder
@@ -196,30 +175,31 @@ let translate (globals, functions) =
 	  | A.Greater -> L.build_fcmp L.Fcmp.Ogt
 	  | A.Geq     -> L.build_fcmp L.Fcmp.Oge
 	  | A.And     -> L.build_and
-          | A.Or      -> L.build_or
+    | A.Or      -> L.build_or
 	  ) e1' e2' "tmp" builder
       | Unop(op, e) ->
 	  let e' = expr builder e in
 	  (match op with
 	  | A.Neg                  -> L.build_neg
-          | A.Not                  -> L.build_not) e' "tmp" builder
-      
+      | A.Not                  -> L.build_not) e' "tmp" builder
+      (* GM 12:51 Mar 25 *)
       (* assume only float need semantic checking *)
       | Retrieve (s, e) -> L.build_call array_retrieve_float_func [|(L.build_load (lookup s) s builder) ; (expr builder e)|] "array_retrieve" builder
       | Array_Assign (s, i, e) -> L.build_call array_add_float_func [|(L.build_load (lookup s) s builder) ; (expr builder i) ; (expr builder e)|]
             "array_add_float" builder
       | Assign (s, e) -> let e' = expr builder e in
-                         let _  = L.build_store e' (lookup s) builder in e'
-      (*| Call ("prints", [_]) -> L.build_call prints_func [| str_format_str |] "prints" builder*)
+                          let _  = L.build_store e' (lookup s) builder in e'
       | Call ("prints", [e]) -> L.build_call printf_func [| char_format_str; (expr builder e)|] "printf" builder
       | Call ("print", [e]) | Call ("printb", [e]) ->
 	  L.build_call printf_func [| int_format_str ; (expr builder e) |]
 	    "printf" builder
       | Call ("printbig", [e]) ->
-	  L.build_call printbig_func [| (expr builder e) |] "printbig" builder
+	  L.build_call printbig_func [| (expr builder e) |] 
+    "printbig" builder
       | Call ("printf", [e]) -> 
 	  L.build_call printf_func [| float_format_str ; (expr builder e) |]
 	    "printf" builder
+      (* Add by Chunlin Zhu on Mar 25*)
       | Call ("strlen", [e]) ->
     L.build_call strlen_func [|expr builder e|] 
     "strlen" builder

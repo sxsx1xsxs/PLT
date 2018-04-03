@@ -2,3 +2,6 @@ _build/*
 *.native
 parser.ml
 parser.mli
+test
+*.ir
+*.s

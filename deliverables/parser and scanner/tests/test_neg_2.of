@@ -1,0 +1,7 @@
+/*negative test*/
+/*Multiple binary operation*/
+
+int MultiBinop (int a, int b)
+{
+    a = a +-*/ b;
+}
