@@ -151,8 +151,8 @@ let translate (globals, functions) =
         let () = L.set_value_name n p in
         let local = L.build_alloca (ltype_of_typ t) n builder in
         let _  = L.build_store p local builder in
-	StringMap.add n local m 
-    in
+	    StringMap.add n local m 
+        in
 
     (* build_array_access 4/2 Xingjian *)
     (* let build_array_access g_map l_map s i1 i2 builder isAssign 
@@ -169,14 +169,13 @@ let translate (globals, functions) =
             | _ -> global_init_expr e
         in
     L.set_value_name n e';
-	let local_var = L.build_alloca (ltype_of_typ t) n builder
-	in StringMap.add n local_var m 
-      in
+	let l_var = L.build_alloca (ltype_of_typ t) n builder in
+    ignore (L.build_store e' l_var builder);
+    StringMap.add n l_var m in
 
       let formals = List.fold_left2 add_formal StringMap.empty fdecl.formals
           (Array.to_list (L.params the_function)) in
-      List.fold_left add_local formals fdecl.locals 
-    in
+      List.fold_left add_local formals fdecl.locals in
 
     (* Return the value for a variable or formal argument. First check
      * locals, then globals *)
@@ -291,7 +290,7 @@ let translate (globals, functions) =
     *)
 
       (* assume only float need semantic checking *)
-      | Retrieve (s, e) -> L.build_call array_retrieve_float_func [|(L.build_load (lookup s) s builder) ; (expr builder e)|] "array_retrieve" builder
+      | Array_Index (s, e) -> L.build_call array_retrieve_float_func [|(L.build_load (lookup s) s builder) ; (expr builder e)|] "array_retrieve" builder
       | Array_Assign (s, i, e) -> L.build_call array_add_float_func [|(L.build_load (lookup s) s builder) ; (expr builder i) ; (expr builder e)|]
             "array_add_float" builder
       | Assign (s, e) -> let e' = expr builder e in
