@@ -205,7 +205,7 @@ let translate (globals, functions) =
 	  | A.Neg                  -> L.build_neg
           | A.Not                  -> L.build_not) e' "tmp" builder
       
-    
+    (*
     (* ArrayLit, ArrayAssign, ArrayIndex, ArrayAccess 4/2 Xingjian*)
     | A.Array_Index(s, ind1) ->
       let i = expr builder g_map l_map ind1 in
@@ -267,7 +267,7 @@ let translate (globals, functions) =
                                   let extract_array = L.build_extractvalue v' 1 "extract_ptr" builder in
                                   let extract_value = L.build_gep extract_array [| i' |] "extract_value" builder in
                                   ignore (L.build_store e' extract_value builder); e'
-
+	*)
 
       (* assume only float need semantic checking *)
       | Retrieve (s, e) -> L.build_call array_retrieve_float_func [|(L.build_load (lookup s) s builder) ; (expr builder e)|] "array_retrieve" builder
