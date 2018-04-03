@@ -126,6 +126,26 @@ let translate (globals, functions) =
     (* Construct the function's "locals": formal arguments and locally
        declared variables.  Allocate each on the stack, initialize their
        value, if appropriate, and remember their values in the "locals" map *)
+    let local_init_expr = function
+        A.Literal i -> L.const_int i32_t i
+        | A.BoolLit b -> L.const_int i1_t (if b then 1 else 0)
+        | A.Sliteral s -> let l = L.define_global "" (L.const_stringz context s) the_module in L.const_bitcast (L.const_gep l [| L.const_int i32_t 0|]) str_t
+        | A.Fliteral f -> L.const_float float_t f
+        | A.Noexpr -> L.const_int i32_t 0
+        | _ -> raise (Failure ("not found"))
+    in
+
+    let local_init_noexpr = function
+        | A.Int -> L.const_int i32_t 0
+        | A.Bool -> L.const_int i1_t 0
+        | A.String -> global_init_expr(A.Sliteral "")
+        | A.Void -> L.const_int void_t 0
+        | A.Float -> L.const_float float_t 0.0
+        (* | A.Array_f -> L.const_pointer_null void_p
+        | A.Array_s -> L.const_pointer_null void_p
+        | A.Array_i -> L.const_pointer_null void_p *)
+    in
+
     let local_vars =
       let add_formal m (t, n, _) p = 
         let () = L.set_value_name n p in
@@ -135,19 +155,20 @@ let translate (globals, functions) =
     in
 
     (* build_array_access 4/2 Xingjian *)
-    let build_array_access g_map l_map s i1 i2 builder isAssign 
+    (* let build_array_access g_map l_map s i1 i2 builder isAssign 
       if isAssign
         then L.build_gep(lookup g_map l_map s) [| i1; i2 |] s builder
         else L.builder_load (L.build_gep(lookup g_map l_map s) [| i1; i2 |] s builder) s builder
-    in
-
+    in*)
 
       (* Allocate space for any locally declared variables and add the
        * resulting registers to our map *)
       let add_local m (t, n, e) =
         let e' = match e with
             A.Noexpr -> global_init_noexpr t
+            | _ -> global_init_expr e
         in
+    L.set_value_name n e';
 	let local_var = L.build_alloca (ltype_of_typ t) n builder
 	in StringMap.add n local_var m 
       in
@@ -207,7 +228,7 @@ let translate (globals, functions) =
       
     
     (* ArrayLit, ArrayAssign, ArrayIndex, ArrayAccess 4/2 Xingjian*)
-    | A.Array_Index(s, ind1) ->
+    (* | A.Array_Index(s, ind1) ->
       let i = expr builder g_map l_map ind1 in
         build_array_access g_map l_map s(L.const_int i32_t 0) i builder false                           
     | A.Array_F_Lit(l, f) ->
@@ -267,7 +288,7 @@ let translate (globals, functions) =
                                   let extract_array = L.build_extractvalue v' 1 "extract_ptr" builder in
                                   let extract_value = L.build_gep extract_array [| i' |] "extract_value" builder in
                                   ignore (L.build_store e' extract_value builder); e'
-
+    *)
 
       (* assume only float need semantic checking *)
       | Retrieve (s, e) -> L.build_call array_retrieve_float_func [|(L.build_load (lookup s) s builder) ; (expr builder e)|] "array_retrieve" builder
