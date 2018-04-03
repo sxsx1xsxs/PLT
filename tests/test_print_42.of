@@ -1,4 +1,6 @@
 
 int main() {
-printb(42);
+int a;
+a = 42;
+printb(a);
 }
