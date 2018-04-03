@@ -140,6 +140,14 @@ let translate (globals, functions) =
 	StringMap.add n local m 
     in
 
+    (* build_array_access 4/2 Xingjian *)
+    let build_array_access g_map l_map s i1 i2 builder isAssign 
+      if isAssign
+        then L.build_gep(lookup g_map l_map s) [| i1; i2 |] s builder
+        else L.builder_load (L.build_gep(lookup g_map l_map s) [| i1; i2 |] s builder) s builder
+    in
+
+
       (* Allocate space for any locally declared variables and add the
        * resulting registers to our map *)
       let add_local m (t, n, e) =
@@ -204,6 +212,70 @@ let translate (globals, functions) =
 	  | A.Neg                  -> L.build_neg
           | A.Not                  -> L.build_not) e' "tmp" builder
       
+    
+    (* ArrayLit, ArrayAssign, ArrayIndex, ArrayAccess 4/2 Xingjian*)
+    | A.Array_Index(s, ind1) ->
+      let i = expr builder g_map l_map ind1 in
+        build_array_access g_map l_map s(L.const_int i32_t 0) i builder false                           
+    | A.Array_F_Lit(l, f) ->
+		let size = L.const_int i32_t (List.length l) in
+		let all = List.map (fun e -> expr builder g_map l_map e) l in
+		let new_array = L.build_array_malloc (L.type_of (List.hd all)) size "tmp" builder in
+		List.iter (fun x ->
+			let more = (L.build_gep new_array [| L.const_int i32_t x |] "tmp2" builder) in
+			let intermediate = List.nth all x in
+			ignore (L.build_store intermediate more builder)
+		) (int_range (List.length l)) ;
+		let type_of_new_literal = L.struct_type context [| i32_t ; L.pointer_type (L.type_of (List.hd all)) |] in
+		let new_literal = L.build_malloc type_of_new_literal "arr_literal" builder in
+		let first_store = L.build_struct_gep new_literal 0 "first" builder in
+		let second_store = L.build_struct_gep new_literal 1 "second" builder in
+		ignore (L.build_store size first_store builder);
+		ignore (L.build_store new_array second_store builder);
+		let actual_literal = L.build_load new_literal "actual_arr_literal" builder in
+		actual_literal
+	| A.Array_S_Lit(l, s) ->
+		let size = L.const_int i32_t (List.length l) in
+		let all = List.map (fun e -> expr builder g_map l_map e) l in
+		let new_array = L.build_array_malloc (L.type_of (List.hd all)) size "tmp" builder in
+		List.iter (fun x ->
+			let more = (L.build_gep new_array [| L.const_int i32_t x |] "tmp2" builder) in
+			let intermediate = List.nth all x in
+			ignore (L.build_store intermediate more builder)
+		) (int_range (List.length l)) ;
+		let type_of_new_literal = L.struct_type context [| i32_t ; L.pointer_type (L.type_of (List.hd all)) |] in
+		let new_literal = L.build_malloc type_of_new_literal "arr_literal" builder in
+		let first_store = L.build_struct_gep new_literal 0 "first" builder in
+		let second_store = L.build_struct_gep new_literal 1 "second" builder in
+		ignore (L.build_store size first_store builder);
+		ignore (L.build_store new_array second_store builder);
+		let actual_literal = L.build_load new_literal "actual_arr_literal" builder in
+		actual_literal
+	| A.Array_I_Lit(l, i) ->
+		let size = L.const_int i32_t (List.length l) in
+		let all = List.map (fun e -> expr builder g_map l_map e) l in
+		let new_array = L.build_array_malloc (L.type_of (List.hd all)) size "tmp" builder in
+		List.iter (fun x ->
+			let more = (L.build_gep new_array [| L.const_int i32_t x |] "tmp2" builder) in
+			let intermediate = List.nth all x in
+			ignore (L.build_store intermediate more builder)
+		) (int_range (List.length l)) ;
+		let type_of_new_literal = L.struct_type context [| i32_t ; L.pointer_type (L.type_of (List.hd all)) |] in
+		let new_literal = L.build_malloc type_of_new_literal "arr_literal" builder in
+		let first_store = L.build_struct_gep new_literal 0 "first" builder in
+		let second_store = L.build_struct_gep new_literal 1 "second" builder in
+		ignore (L.build_store size first_store builder);
+		ignore (L.build_store new_array second_store builder);
+		let actual_literal = L.build_load new_literal "actual_arr_literal" builder in
+		actual_literal
+	| A.Array_Assign(v, i, e) -> let e' = expr builder g_map l_map e in 
+                                  let i' = expr builder g_map l_map (List.hd i) in
+                                  let v' = L.build_load (lookup g_map l_map v) v builder in 
+                                  let extract_array = L.build_extractvalue v' 1 "extract_ptr" builder in
+                                  let extract_value = L.build_gep extract_array [| i' |] "extract_value" builder in
+                                  ignore (L.build_store e' extract_value builder); e'
+
+
       (* assume only float need semantic checking *)
       | Retrieve (s, e) -> L.build_call array_retrieve_float_func [|(L.build_load (lookup s) s builder) ; (expr builder e)|] "array_retrieve" builder
       | Array_Assign (s, i, e) -> L.build_call array_add_float_func [|(L.build_load (lookup s) s builder) ; (expr builder i) ; (expr builder e)|]
