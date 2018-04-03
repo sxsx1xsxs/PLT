@@ -49,13 +49,12 @@ let translate (globals, functions) =
     | A.Array_i -> void_p *)
   in
 
-<<<<<<< HEAD
   let global_init_expr = function
       A.Literal i -> L.const_int i32_t i
     | A.BoolLit b -> L.const_int i1_t (if b then 1 else 0)
     | A.Sliteral s -> let l = L.define_global "" (L.const_stringz context s) the_module in 
     L.const_bitcast (L.const_gep l [| L.const_int i32_t 0|]) str_t
-    | A.FLiteral f -> L.const_float float_t f
+    | A.Fliteral f -> L.const_float float_t f
     | A.Noexpr -> L.const_int i32_t 0
     | _ -> raise (Failure ("not found"))
   in
@@ -73,13 +72,8 @@ let translate (globals, functions) =
 
   (* Declare each global variable; remember its value in a map *)
   let global_vars = 
-<<<<<<< HEAD
     let global_var m (t, n, e) =
       let init = global_init_expr e in
-=======
-    let global_var m (t, n, _) =
-      let init = global_init t in
->>>>>>> a500da8291c30a1167462b77074e98fc2832510b
       StringMap.add n (L.define_global n init the_module) m in
     List.fold_left global_var StringMap.empty globals in
 
@@ -145,7 +139,6 @@ let translate (globals, functions) =
       let add_local m (t, n, e) =
         let e' = match e with
             A.Noexpr -> global_init_noexpr t
-            | _ -> expr builder global_init_expr m e
         in
 	let local_var = L.build_alloca (ltype_of_typ t) n builder
 	in StringMap.add n local_var m 
