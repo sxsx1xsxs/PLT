@@ -22,11 +22,7 @@ type sstmt =
 		  
 type sinit = typ * string * sexpr
 
-type svar_decl = {
-	svtyp  : typ;
-	svname : string;
-        svexpr : sexpr;
-}
+type svar_decl = typ * string * sexpr
 
 type sfunc_decl = {
         sftyp    : typ;
@@ -35,11 +31,5 @@ type sfunc_decl = {
         slocals  : svar_decl list;
         sbody    : sstmt list;
 }
-
-type saction = svar_decl list * sstmt list
-
-type spattern = SRegexPattern of string
-
-type srule = spattern * saction
 
 type sprogram = svar_decl list * sfunc_decl list
