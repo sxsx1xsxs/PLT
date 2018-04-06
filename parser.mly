@@ -162,6 +162,7 @@ args_opt:
 args_list:
     expr { [$1] }
     | args_list COMMA expr { $3 :: $1 }
+
 /* start of regex */
 single_regex:
     REGEX_STRING { $1 }
