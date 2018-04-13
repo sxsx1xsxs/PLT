@@ -1,0 +1,9 @@
+/* Test if a declared function can be found and called */
+
+int foo(){
+}
+
+int main(){
+    int a = 5;
+    foo();   
+}

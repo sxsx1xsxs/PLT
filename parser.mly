@@ -41,7 +41,7 @@ program:
 
 /* start of decls */
 fdecl:
-    typ ID LPR vdecl_list RPR LBC vdecl_list stmt_list RBC
+    typ ID LPR formal_list RPR LBC vdecl_list stmt_list RBC
     { { ftyp = $1;
         fname = $2;
         formals = $4;
@@ -58,22 +58,21 @@ typ:
     | ARRAY_S { Array_s }
     | ARRAY_I { Array_i}*/
 
-/* formals_opt:
+formal_list:
                     { [] }
-    | vdecl_list   { List.rev $1 }*/
- 
-/* formal_list:
-    typ ID                   { [($1, $2, Noexpr)] }
-    | formal_list COMMA typ ID { {($3,$4,Noexpr) :: $1 } */
+    | formal_list formal_decl  { $2 :: $1 }
 
+formal_decl:
+    typ ID         { VarDecl($1, $2, Noexpr) }
+    | COMMA typ ID { VarDecl($2, $3, Noexpr) }
 
 vdecl_list:
                        { [] }
     | vdecl_list vdecl { $2 :: $1 }
 
 vdecl:
-    typ ID SEMI { ($1, $2, Noexpr) }
-    | typ ID ASSIGN expr SEMI { ($1, $2, $4) }
+    typ ID SEMI { VarDecl($1, $2, Noexpr) }
+    | typ ID ASSIGN expr SEMI { VarDecl($1, $2, $4) }
 
 /* end of decls */
 
@@ -162,6 +161,7 @@ args_opt:
 args_list:
     expr { [$1] }
     | args_list COMMA expr { $3 :: $1 }
+
 /* start of regex */
 single_regex:
     REGEX_STRING { $1 }

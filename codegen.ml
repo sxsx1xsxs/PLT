@@ -72,7 +72,7 @@ let translate (globals, functions) =
 
   (* Declare each global variable; remember its value in a map *)
   let global_vars = 
-    let global_var m (t, n, e) =
+    let global_var m (A.VarDecl(t, n, e)) =
       let init = global_init_expr e in
       StringMap.add n (L.define_global n init the_module) m in
     List.fold_left global_var StringMap.empty globals in
@@ -104,8 +104,8 @@ let translate (globals, functions) =
   let function_decls =
     let function_decl m fdecl =
       let name = fdecl.fname
-      and formal_types = 
-	Array.of_list (List.map (fun (t,_,_) -> ltype_of_typ t ) fdecl.formals)
+      and formal_types =
+	Array.of_list (List.map (fun (A.VarDecl(t, _, _)) -> ltype_of_typ t ) fdecl.formals)
       in let ftype = L.function_type (ltype_of_typ fdecl.ftyp) formal_types in
       StringMap.add name (L.define_function name ftype the_module, fdecl) m in
     List.fold_left function_decl StringMap.empty functions in
@@ -147,7 +147,7 @@ let translate (globals, functions) =
     in
 
     let local_vars =
-      let add_formal m (t, n, _) p = 
+      let add_formal m (A.VarDecl(t, n, _)) p = 
         let () = L.set_value_name n p in
         let local = L.build_alloca (ltype_of_typ t) n builder in
         let _  = L.build_store p local builder in
@@ -163,10 +163,10 @@ let translate (globals, functions) =
 
       (* Allocate space for any locally declared variables and add the
        * resulting registers to our map *)
-      let add_local m (t, n, e) =
+      let add_local m (A.VarDecl(t, n, e)) =
         let e' = match e with
-            A.Noexpr -> global_init_noexpr t
-            | _ -> global_init_expr e
+            A.Noexpr -> local_init_noexpr t
+            | _ -> local_init_expr e
         in
     L.set_value_name n e';
 	let l_var = L.build_alloca (ltype_of_typ t) n builder in
