@@ -10,35 +10,35 @@ module StringMap = Map.Make(String)
 
    Check each global variable, then check each function *)
 
-let from_var_decl_to_bind_list var_list = 
-  match var_list with 
-  |[] -> []
-  |(a,b,c)::b -> (a, b)::from_var_decl_to_bind_list b 
-  | _ -> raise (Failure "illegal variable list")
-in 
+
+let fstt (a, b, c) = a in
+let sndt (a, b, c) = b in 
 
 let check (globals, functions) =
 
   (* Check if a certain kind of binding has void type or is a duplicate
      of another, previously checked binding *)
-  let check_binds (kind : string) (to_check : bind list) = 
-    let check_it checked binding = 
-      let void_err = "illegal void " ^ kind ^ " " ^ snd binding
-      and dup_err = "duplicate " ^ kind ^ " " ^ snd binding
-      in match binding with
+  let check_var_decl (kind : string) (var_list : var_decl list) = 
+    let check_it checked var_decl = 
+      let void_err = "illegal void " ^ kind ^ " " ^ sndt var_decl
+      and dup_err = "duplicate " ^ kind ^ " " ^ sndt var_decl
+      in match var_decl with
         (* No void bindings *)
-        (Void, _) -> raise (Failure void_err)
-      | (_, n1) -> match checked with
-                    (* No duplicate bindings *)
-                      ((_, n2) :: _) when n1 = n2 -> raise (Failure dup_err)
-                    | _ -> binding :: checked
+        (Void, _, _) -> raise (Failure void_err)
+      | (ty1, n1, e) -> match (expr e) with
+                      | (ty2, _) when ty1 != ty2 -> raise (Failure "type " ^ string_of_typ ty1 ^ " does not match type " ^ string_of_typ ty2 ^" in the variable declaration " ^ string_of_vdecl var_decl)
+                      | (ty2, _, _) when ty1 != ty2 -> raise (Failure "type " ^ string_of_typ ty1 ^ " does not match type " ^ string_of_typ ty2 ^" in the variable declaration " ^ string_of_vdecl var_decl)
+                      | _ -> match checked with
+                    (* No duplicate variable_declarations *)
+                            ((_, n2, _) :: _) when n1 = n2 -> raise (Failure dup_err)
+                            | _ -> var_decl :: checked
     in let _ = List.fold_left check_it [] (List.sort compare to_check) 
        in to_check
   in 
 
   (**** Checking Global Variables ****)
 
-  let globals' = check_binds "global" (from_var_decl_to_bind_list globals) in
+  let globals' = check_binds "global" globals in
 
   (**** Checking Functions ****)
 
@@ -81,8 +81,8 @@ let check (globals, functions) =
 
   let check_function func =
     (* Make sure no formals or locals are void or duplicates *)
-    let formals' = check_binds "formal" (from_var_decl_to_bind_list func.formals) in
-    let locals' = check_binds "local" (from_var_decl_to_bind_list func.locals) in
+    let formals' = check_binds "formal" func.formals in
+    let locals' = check_binds "local" func.locals in
 
     (* Raise an exception if the given rvalue type cannot be assigned to
        the given lvalue type *)
