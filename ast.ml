@@ -82,7 +82,7 @@ let rec string_of_expr = function
   | Call(f, el) ->
       f ^ "(" ^ String.concat ", " (List.map string_of_expr el) ^ ")"
   | Noexpr -> ""
-  | Retrieve (n, e) -> n ^ "[" ^ string_of_expr e ^ "]"
+  | Array_Index (n, e) -> n ^ "[" ^ string_of_expr e ^ "]"
   | Array_Assign (n, e1, e2) -> n ^ "[" ^ string_of_expr e1 ^ "]" ^ " = " ^ string_of_expr e2
 
 let rec string_of_stmt = function
@@ -99,11 +99,11 @@ let rec string_of_stmt = function
   | While(e, s) -> "while (" ^ string_of_expr e ^ ") " ^ string_of_stmt s
 
 let string_of_vdecl = function
-  |(t, id, Noexpr) = string_of_typ t ^ " " ^ id
-  |(t, id, e) = string_of_typ t ^ " " ^ id ^ " = " ^ string_of_expr e
+   (t, id, Noexpr) -> string_of_typ t ^ " " ^ id
+  |(t, id, e) -> string_of_typ t ^ " " ^ id ^ " = " ^ string_of_expr e
 
 let string_of_fdecl fdecl =
-  string_of_typ fdecl.typ ^ " " ^
+  string_of_typ fdecl.ftyp ^ " " ^
   fdecl.fname ^ "(" ^ String.concat ", " (List.map string_of_vdecl fdecl.formals) ^
   ")\n{\n" ^
   String.concat ";\n" (List.map string_of_vdecl fdecl.locals) ^
