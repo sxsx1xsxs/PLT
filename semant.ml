@@ -27,7 +27,6 @@ let check (globals, functions) =
         (Void, _, _) -> raise (Failure void_err)
       | (ty1, n1, e) -> match (expr e) with
                       | (ty2, _) when ty1 != ty2 -> raise (Failure "type " ^ string_of_typ ty1 ^ " does not match type " ^ string_of_typ ty2 ^" in the variable declaration " ^ string_of_vdecl var_decl)
-                      | (ty2, _, _) when ty1 != ty2 -> raise (Failure "type " ^ string_of_typ ty1 ^ " does not match type " ^ string_of_typ ty2 ^" in the variable declaration " ^ string_of_vdecl var_decl)
                       | _ -> match checked with
                     (* No duplicate variable_declarations *)
                             ((_, n2, _) :: _) when n1 = n2 -> raise (Failure dup_err)
@@ -109,7 +108,7 @@ let check (globals, functions) =
       | BoolLit l  -> (Bool, SBoolLit l)
       | Noexpr     -> (Void, SNoexpr)
       | Id s       -> (type_of_identifier s, SId s)
-      | Sliteral s -> (String, SSLiteral s)
+      | Sliteral s -> (String, SSliteral s)
       | Assign(var, e) as ex -> 
           let lt = type_of_identifier var
           and (rt, e') = expr e in
@@ -149,7 +148,7 @@ let check (globals, functions) =
           if List.length args != param_length then
             raise (Failure ("expecting " ^ string_of_int param_length ^ 
                             " arguments in " ^ string_of_expr call))
-          else let check_call (ft, _) e = 
+          else let check_call (ft, _, _) e = 
             let (et, e') = expr e in 
             let err = "illegal argument found " ^ string_of_typ et ^
               " expected " ^ string_of_typ ft ^ " in " ^ string_of_expr e

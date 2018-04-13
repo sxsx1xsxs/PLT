@@ -60,6 +60,6 @@ parser.cmo : ast.cmo parser.cmi
 parser.cmx : ast.cmx parser.cmi
 scanner.cmo : parser.cmi
 scanner.cmx : parser.cmx
-# semant.cmo : ast.cmo
-# semant.cmx : ast.cmx
+semant.cmo : ast.cmo
+semant.cmx : ast.cmx
 parser.cmi : ast.cmo
