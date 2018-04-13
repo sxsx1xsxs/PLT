@@ -10,6 +10,13 @@ module StringMap = Map.Make(String)
 
    Check each global variable, then check each function *)
 
+let from_var_decl_to_bind_list var_list = 
+  match var_list with 
+  |[] -> []
+  |(a,b,c)::b -> (a, b)::from_var_decl_to_bind_list b 
+  | _ -> raise (Failure "illegal variable list")
+in 
+
 let check (globals, functions) =
 
   (* Check if a certain kind of binding has void type or is a duplicate
@@ -31,7 +38,7 @@ let check (globals, functions) =
 
   (**** Checking Global Variables ****)
 
-  let globals' = check_binds "global" globals in
+  let globals' = check_binds "global" (from_var_decl_to_bind_list globals) in
 
   (**** Checking Functions ****)
 
@@ -50,7 +57,7 @@ let check (globals, functions) =
 
   (* Add function name to symbol table *)
   let add_func map fd = 
-    let built_in_err = "function " ^ fd.fname ^ " may not be defined"
+    let built_in_err = "function " ^ fd.fname ^ " is a built-in function and may not be redefined"
     and dup_err = "duplicate function " ^ fd.fname
     and make_err er = raise (Failure er)
     and n = fd.fname (* Name of the function *)
@@ -74,8 +81,8 @@ let check (globals, functions) =
 
   let check_function func =
     (* Make sure no formals or locals are void or duplicates *)
-    let formals' = check_binds "formal" func.formals in
-    let locals' = check_binds "local" func.locals in
+    let formals' = check_binds "formal" (from_var_decl_to_bind_list func.formals) in
+    let locals' = check_binds "local" (from_var_decl_to_bind_list func.locals) in
 
     (* Raise an exception if the given rvalue type cannot be assigned to
        the given lvalue type *)
@@ -102,6 +109,7 @@ let check (globals, functions) =
       | BoolLit l  -> (Bool, SBoolLit l)
       | Noexpr     -> (Void, SNoexpr)
       | Id s       -> (type_of_identifier s, SId s)
+      | Sliteral s -> (String, SSLiteral s)
       | Assign(var, e) as ex -> 
           let lt = type_of_identifier var
           and (rt, e') = expr e in
