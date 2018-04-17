@@ -45,9 +45,6 @@ rule token pat = parse
   | "true"  {TRUE}
   | "false" {FALSE}
   | "void"  {VOID}
-  | "array_float" { ARRAY_F }
-  | "array_int" { ARRAY_I }
-  | "array_string" { ARRAY_S }
   | "float" {FLOAT}
   | "bool"  {BOOL}
   | "int"   {INT}
