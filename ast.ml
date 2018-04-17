@@ -5,18 +5,15 @@ type op = Add | Sub | Mult | Div | Equal | Neq | Less | Leq | Greater | Geq | An
 
 type uop = Neg | Not
 
-type typ = Int | Bool | Float | Void | String (* | Array_f | Array_s | Array_i *)
+type typ = Int | Bool | Float | Void | String | Arr of typ * int
 
 type expr = Literal of int             | BoolLit of bool
           | Fliteral of float          | Id of string
           | Sliteral of string         | Binop of expr * op * expr 
-          | Unop of uop * expr         | Assign of string * expr   
+          | Unop of uop * expr         | Assign of expr * expr   
           | Call of string * expr list | Noexpr
-          | Array_Index of string * expr
-          | Array_Assign of string * expr * expr
-          | Array_F_Lit of (string * float) list 
-          | Array_S_Lit of (string * string) list
-          | Array_I_Lit of (string * int) list 
+          | Array_Index of expr * expr
+          | Array_Lit of expr list
 
 
 type stmt = Block of stmt list 
@@ -61,12 +58,28 @@ let string_of_uop = function
     Neg -> "-"
   | Not -> "!"
 
-let string_of_typ = function
+
+(* let string_of_typ = function
     Int -> "int"
   | Bool -> "bool"
   | Float -> "float"
   | Void -> "void"
-  | String -> "string"
+  | String -> "string" *)
+  
+let rec string_of_typ_ps = function
+    Int -> "int", ""
+  | Bool -> "bool", ""
+  | Void -> "void", ""
+  | Float -> "float", ""
+  | Arr(typ, len) ->
+    let pref, suf = string_of_typ_ps typ in
+    pref, "[" ^ (string_of_int len) ^ "]" ^ suf
+  | String -> "string", ""
+
+let string_of_typ t =
+  (* Split by prefix and suffix so array dims are in the right order *)
+  let p, s = string_of_typ_ps t in
+  p ^ s
 
 let rec string_of_expr = function
     Literal(l) -> string_of_int l
@@ -78,13 +91,13 @@ let rec string_of_expr = function
   | Binop(e1, o, e2) ->
       string_of_expr e1 ^ " " ^ string_of_op o ^ " " ^ string_of_expr e2
   | Unop(o, e) -> string_of_uop o ^ string_of_expr e
-  | Assign(v, e) -> v ^ " = " ^ string_of_expr e
+  | Assign(v, e) -> string_of_expr v ^ " = " ^ string_of_expr e
   | Call(f, el) ->
       f ^ "(" ^ String.concat ", " (List.map string_of_expr el) ^ ")"
   | Noexpr -> ""
-  | Array_Index (n, e) -> n ^ "[" ^ string_of_expr e ^ "]"
-  | Array_Assign (n, e1, e2) -> n ^ "[" ^ string_of_expr e1 ^ "]" ^ " = " ^ string_of_expr e2
-
+  | Array_Lit l -> "[" ^ String.concat ", " (List.map string_of_expr l) ^ "]"
+  | Array_Index (e, ind) -> string_of_expr e ^ "[" ^ string_of_expr ind ^ "]"
+  
 let rec string_of_stmt = function
     Block(stmts) ->
       "{\n" ^ String.concat "" (List.map string_of_stmt stmts) ^ "}\n"
