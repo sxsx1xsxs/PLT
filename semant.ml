@@ -10,21 +10,27 @@ module StringMap = Map.Make(String)
 
    Check each global variable, then check each function *)
 
+
+let fstt (a, b, c) = a in
+let sndt (a, b, c) = b in 
+
 let check (globals, functions) =
 
   (* Check if a certain kind of binding has void type or is a duplicate
      of another, previously checked binding *)
-  let check_binds (kind : string) (to_check : bind list) = 
-    let check_it checked binding = 
-      let void_err = "illegal void " ^ kind ^ " " ^ snd binding
-      and dup_err = "duplicate " ^ kind ^ " " ^ snd binding
-      in match binding with
+  let check_var_decl (kind : string) (var_list : var_decl list) = 
+    let check_it checked var_decl = 
+      let void_err = "illegal void " ^ kind ^ " " ^ sndt var_decl
+      and dup_err = "duplicate " ^ kind ^ " " ^ sndt var_decl
+      in match var_decl with
         (* No void bindings *)
-        (Void, _) -> raise (Failure void_err)
-      | (_, n1) -> match checked with
-                    (* No duplicate bindings *)
-                      ((_, n2) :: _) when n1 = n2 -> raise (Failure dup_err)
-                    | _ -> binding :: checked
+        (Void, _, _) -> raise (Failure void_err)
+      | (ty1, n1, e) -> match (expr e) with
+                      | (ty2, _) when ty1 != ty2 -> raise (Failure "type " ^ string_of_typ ty1 ^ " does not match type " ^ string_of_typ ty2 ^" in the variable declaration " ^ string_of_vdecl var_decl)
+                      | _ -> match checked with
+                    (* No duplicate variable_declarations *)
+                            ((_, n2, _) :: _) when n1 = n2 -> raise (Failure dup_err)
+                            | _ -> var_decl :: checked
     in let _ = List.fold_left check_it [] (List.sort compare to_check) 
        in to_check
   in 
@@ -50,7 +56,7 @@ let check (globals, functions) =
 
   (* Add function name to symbol table *)
   let add_func map fd = 
-    let built_in_err = "function " ^ fd.fname ^ " may not be defined"
+    let built_in_err = "function " ^ fd.fname ^ " is a built-in function and may not be redefined"
     and dup_err = "duplicate function " ^ fd.fname
     and make_err er = raise (Failure er)
     and n = fd.fname (* Name of the function *)
@@ -102,6 +108,7 @@ let check (globals, functions) =
       | BoolLit l  -> (Bool, SBoolLit l)
       | Noexpr     -> (Void, SNoexpr)
       | Id s       -> (type_of_identifier s, SId s)
+      | Sliteral s -> (String, SSliteral s)
       | Assign(var, e) as ex -> 
           let lt = type_of_identifier var
           and (rt, e') = expr e in
@@ -141,7 +148,7 @@ let check (globals, functions) =
           if List.length args != param_length then
             raise (Failure ("expecting " ^ string_of_int param_length ^ 
                             " arguments in " ^ string_of_expr call))
-          else let check_call (ft, _) e = 
+          else let check_call (ft, _, _) e = 
             let (et, e') = expr e in 
             let err = "illegal argument found " ^ string_of_typ et ^
               " expected " ^ string_of_typ ft ^ " in " ^ string_of_expr e

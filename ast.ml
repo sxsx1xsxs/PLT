@@ -29,7 +29,7 @@ type stmt = Block of stmt list
 
 (* type decl = var_decl list | func_decl list *)
 
-type var_decl = typ * string * expr
+type var_decl = VarDecl of typ * string * expr
 
 type func_decl = {
         ftyp    : typ;
@@ -99,8 +99,8 @@ let rec string_of_stmt = function
   | While(e, s) -> "while (" ^ string_of_expr e ^ ") " ^ string_of_stmt s
 
 let string_of_vdecl = function
-   (t, id, Noexpr) -> string_of_typ t ^ " " ^ id
-  |(t, id, e) -> string_of_typ t ^ " " ^ id ^ " = " ^ string_of_expr e
+   VarDecl(t, id, Noexpr) -> string_of_typ t ^ " " ^ id
+  |VarDecl(t, id, e) -> string_of_typ t ^ " " ^ id ^ " = " ^ string_of_expr e
 
 let string_of_fdecl fdecl =
   string_of_typ fdecl.ftyp ^ " " ^

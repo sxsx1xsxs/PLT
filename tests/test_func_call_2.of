@@ -1,0 +1,10 @@
+/* function call from another function with int operation */
+int b = 10;
+
+int foo(int a){
+    printb(a+b);
+}
+
+int main(){
+    foo(32);
+}

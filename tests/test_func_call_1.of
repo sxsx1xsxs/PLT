@@ -1,0 +1,11 @@
+/* Test if a declared function can be found and called */
+
+int a = 5;
+
+void foo(string s){
+    prints(s);
+}
+
+int main(){
+    foo("ola");   
+}

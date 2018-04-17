@@ -9,6 +9,7 @@ let () =
     let ast = Parser.program Scanner.next_token lexbuf in
 
 	let m = Codegen.translate ast in
-	Llvm_analysis.assert_valid_module m; 
+	Llvm_analysis.assert_valid_module m;
 
     print_string (Llvm.string_of_llmodule m);;
+        (*print_string (Ast.string_of_program ast);;*)
