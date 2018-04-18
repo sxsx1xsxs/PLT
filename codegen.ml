@@ -45,7 +45,7 @@ let translate (globals, functions) =
   (* and arr_t      = L.i64_type context in *)
 
   (* Convert OpenFile types to LLVM types *)
-  let ltype_of_typ = function
+  let rec ltype_of_typ = function
       A.Int   -> i32_t
     | A.Bool  -> i1_t
     | A.String -> str_t
@@ -54,7 +54,7 @@ let translate (globals, functions) =
     | A.Arr (typ, len) -> L.array_type (ltype_of_typ typ) len
   in
 
-  let global_init_expr = function
+  let rec global_init_expr = function
       A.Literal i -> L.const_int i32_t i
     | A.BoolLit b -> L.const_int i1_t (if b then 1 else 0)
     | A.Sliteral s -> let l = L.define_global "" (L.const_stringz context s) the_module in 
@@ -62,7 +62,7 @@ let translate (globals, functions) =
     | A.Fliteral f -> L.const_float float_t f
     | A.Noexpr -> L.const_int i32_t 0
 	| A.Array_Lit l ->
-      let lll = Array.of_list (List.map const_expr l) in
+      let lll = Array.of_list (List.map global_init_expr l) in
       let typ = L.type_of (Array.get lll 0) in
       L.const_array typ lll
     | _ -> raise (Failure ("not found"))
@@ -74,7 +74,7 @@ let translate (globals, functions) =
     | A.String -> global_init_expr(A.Sliteral "")
     | A.Void -> L.const_int void_t 0
     | A.Float -> L.const_float float_t 0.0
-    | A.Arr -> L.const_pointer_null void_p
+    | A.Arr (typ, len)-> global_init_expr(A.Array_Lit [])
     (* | A.Array_f -> L.const_pointer_null void_p
     | A.Array_s -> L.const_pointer_null void_p
     | A.Array_i -> L.const_pointer_null void_p *)
@@ -87,7 +87,7 @@ let translate (globals, functions) =
       | A.Fliteral f -> L.const_float float_t f
       | A.Noexpr -> L.const_int i32_t 0
 	  | A.Array_Lit l ->
-        let lll = Array.of_list (List.map const_expr l) in
+        let lll = Array.of_list (List.map global_init_expr l) in
         let typ = L.type_of (Array.get lll 0) in
         L.const_array typ lll
       | _ -> raise (Failure ("not found"))
@@ -99,7 +99,7 @@ let translate (globals, functions) =
       | A.String -> global_init_expr(A.Sliteral "")
       | A.Void -> L.const_int void_t 0
       | A.Float -> L.const_float float_t 0.0
-	  | A.Arr -> L.const_pointer_null void_p
+	    | A.Arr (typ, len) -> local_init_expr(A.Array_Lit [])
       (* | A.Array_f -> L.const_pointer_null void_p
       | A.Array_s -> L.const_pointer_null void_p
       | A.Array_i -> L.const_pointer_null void_p *)
@@ -243,7 +243,7 @@ let translate (globals, functions) =
                          let e2'  = (expr builder g_map l_map e2) in
 						 ignore (L.build_store e2' l_val builder); e2'
 	  *)
-	  | A.Assign (e1, e2) -> L.build_load (lexpr builder g_map l_map (e1,e2)) "" builder
+	  | A.Assign _ as e -> L.build_load (lexpr builder g_map l_map e) "" builder
 	  | A.Array_Lit l ->
 	    let lll = List.map (expr builder g_map l_map) l in
 		let typ = (L.array_type (L.type_of (List.hd lll)) (List.length l)) in
