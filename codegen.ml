@@ -18,6 +18,14 @@ module A = Ast
 
 module StringMap = Map.Make(String)
 
+  (* Helper function for assigning struct values. *)
+  let build_struct_assign str values builder =
+  let assign (llv, ind) value =
+    match value with
+    | Some v -> (L.build_insertvalue llv v ind "" builder, ind+1)
+    | None -> (llv, ind+1)
+  in
+  let (ret, _) = Array.fold_left assign (str, 0) values in ret
 
 let translate (globals, functions) =
     (* Code Generation from the SAST. Returns an LLVM module if successful,
@@ -66,7 +74,7 @@ let translate (globals, functions) =
     | A.String -> global_init_expr(A.Sliteral "")
     | A.Void -> L.const_int void_t 0
     | A.Float -> L.const_float float_t 0.0
-	| A.Arr -> L.const_pointer_null void_p
+    | A.Arr -> L.const_pointer_null void_p
     (* | A.Array_f -> L.const_pointer_null void_p
     | A.Array_s -> L.const_pointer_null void_p
     | A.Array_i -> L.const_pointer_null void_p *)
@@ -123,14 +131,7 @@ let translate (globals, functions) =
   let array_retrieve_float_func = L.declare_function "array_retrieve_float" array_retrieve_float_t the_module in
   *)
   
-  (* Helper function for assigning struct values. *)
-  let build_struct_assign str values builder =
-  let assign (llv, ind) value =
-    match value with
-    | Some v -> (L.build_insertvalue llv v ind "" builder, ind+1)
-    | None -> (llv, ind+1)
-  in
-  let (ret, _) = Array.fold_left assign (str, 0) values in ret
+
   
   let function_decls =
     let function_decl m fdecl =
@@ -185,7 +186,7 @@ let translate (globals, functions) =
 	  | _ -> raise (Failure ("not found"))(* Semant should catch other illegal attempts at assignment *)
 		
     (* Construct code for an expression; return its value *)
-    let rec expr builder g_map l_map = function
+    and expr builder g_map l_map = function
         A.Literal i -> L.const_int i32_t i
       | A.BoolLit b -> L.const_int i1_t (if b then 1 else 0)
       | A.Fliteral l -> L.const_float float_t l

@@ -8,8 +8,8 @@ let () =
     let lexbuf = Lexing.from_channel !channel in
     let ast = Parser.program Scanner.next_token lexbuf in
 
-	let m = Codegen.translate ast in
-	Llvm_analysis.assert_valid_module m;
+	(*let m = Codegen.translate ast in
+	Llvm_analysis.assert_valid_module m;*)
 
-    print_string (Llvm.string_of_llmodule m);;
-        (*print_string (Ast.string_of_program ast);;*)
+    (*print_string (Llvm.string_of_llmodule m);;*)
+        print_string (Ast.string_of_program ast);;

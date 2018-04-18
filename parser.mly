@@ -68,6 +68,8 @@ vdecl_list:
 
 vdecl:
     typ ID SEMI { VarDecl($1, $2, Noexpr) }
+    | typ ID LBK INT_T RBK SEMI {VarDecl(Arr($1, $4), $2, Noexpr)}
+    | typ ID LBK INT_T RBK ASSIGN expr SEMI {VarDecl(Arr($1, $4), $2, $7)}
     | typ ID ASSIGN expr SEMI { VarDecl($1, $2, $4) }
 
 /* end of decls */
@@ -131,7 +133,7 @@ expr:
 
 expr_list:
     | expr { [$1] }
-    | expr COMMA expr_list { $1 :: $3 }
+    | expr_list COMMA expr { $3 :: $1 }
 
 array_list:
 	/* nothing */ { [] }
