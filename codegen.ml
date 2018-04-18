@@ -75,10 +75,6 @@ let translate (globals, functions) =
     | A.String -> global_init_expr(A.Sliteral "")
     | A.Void -> L.const_int void_t 0
     | A.Float -> L.const_float float_t 0.0
-	| A.Arr -> L.const_pointer_null void_p
-    (* | A.Array_f -> L.const_pointer_null void_p
-    | A.Array_s -> L.const_pointer_null void_p
-    | A.Array_i -> L.const_pointer_null void_p *)
   in
 
   let local_init_expr = function
@@ -100,10 +96,6 @@ let translate (globals, functions) =
       | A.String -> global_init_expr(A.Sliteral "")
       | A.Void -> L.const_int void_t 0
       | A.Float -> L.const_float float_t 0.0
-	  | A.Arr -> L.const_pointer_null void_p
-      (* | A.Array_f -> L.const_pointer_null void_p
-      | A.Array_s -> L.const_pointer_null void_p
-      | A.Array_i -> L.const_pointer_null void_p *)
   in
 
   let printf_t = L.var_arg_function_type i32_t [| str_t |] in
@@ -185,7 +177,7 @@ let translate (globals, functions) =
 	  | _ -> raise (Failure ("not found"))(* Semant should catch other illegal attempts at assignment *)
 		
     (* Construct code for an expression; return its value *)
-    let rec expr builder g_map l_map = function
+    and expr builder g_map l_map = function
         A.Literal i -> L.const_int i32_t i
       | A.BoolLit b -> L.const_int i1_t (if b then 1 else 0)
       | A.Fliteral l -> L.const_float float_t l

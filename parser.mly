@@ -53,6 +53,18 @@ typ:
     | FLOAT { Float }
     | BOOL { Bool }
     | INT { Int }
+	
+expr_list:
+    | expr { [$1] }
+    | expr COMMA expr_list { $1 :: $3 }
+
+array_list:
+	/* nothing */ { [] }
+	| LBK INT_T RBK array_list { $2 :: $4 }
+
+bind:
+	| typ ID array_list
+	{ List.fold_right (fun l (name, typ) -> (name, Arr(typ, l))) $3 ($2, $1) }
 
 formal_list:
                     { [] }
@@ -67,8 +79,8 @@ vdecl_list:
     | vdecl_list vdecl { $2 :: $1 }
 
 vdecl:
-    typ ID SEMI { VarDecl($1, $2, Noexpr) }
-    | typ ID ASSIGN expr SEMI { VarDecl($1, $2, $4) }
+    bind SEMI { VarDecl($1, $2, Noexpr) }
+    | bind ASSIGN expr SEMI { VarDecl($1, $2, $4) }
 
 /* end of decls */
 
@@ -128,18 +140,6 @@ expr:
     | expr LBK expr RBK { Array_Index($1, $3) }
     | ID LPR args_opt RPR { Call($1, $3) }
     | LPR expr RPR     { $2 }
-
-expr_list:
-    | expr { [$1] }
-    | expr COMMA expr_list { $1 :: $3 }
-
-array_list:
-	/* nothing */ { [] }
-	| LBK INT_T RBK array_list { $2 :: $4 }
-
-bind:
-	| typ ID array_list
-	{ List.fold_right (fun l (name, typ) -> (name, Arr(typ, l))) $3 ($2, $1) }
 
 args_opt:
     { [] }
