@@ -156,6 +156,21 @@ let check (globals, functions) =
           in 
           let args' = List.map2 check_call fd.formals args
           in (fd.typ, SCall(fname, args'))
+	  | Array_Lit l->
+		(* Check array size and equality of element types *)
+		(match l with
+		  | [] -> failwith ("illegal empty array " ^ string_of_expr e)
+		  | hd :: tl ->
+			let (ltm hd') = expr hd in
+			let tl' = List.map (fun l ->
+				let t, e' = expr l in
+				let _, e'' = check_assign lt e' t
+					("array literal " ^ string_of_expr e ^
+					" contains elements of unequal types "
+					^ string_of_typ lt ^ " and " ^ string_of_typ t)
+				in e'') tl
+			in
+			Arr (lt, List,length l), ArrayLit(hd' :: tl'))
     in
 
     let check_bool_expr e = 
