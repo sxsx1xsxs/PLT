@@ -18,6 +18,15 @@ module A = Ast
 
 module StringMap = Map.Make(String)
 
+  
+(* Helper function for assigning struct values. *)
+let build_struct_assign str values builder =
+  let assign (llv, ind) value =
+    match value with
+    | Some v -> (L.build_insertvalue llv v ind "" builder, ind+1)
+    | None -> (llv, ind+1)
+  in
+  let (ret, _) = Array.fold_left assign (str, 0) values in ret
 
 let translate (globals, functions) =
     (* Code Generation from the SAST. Returns an LLVM module if successful,
@@ -122,15 +131,6 @@ let translate (globals, functions) =
   let array_retrieve_float_t = L.function_type float_t [|void_p ; str_t|] in
   let array_retrieve_float_func = L.declare_function "array_retrieve_float" array_retrieve_float_t the_module in
   *)
-  
-  (* Helper function for assigning struct values. *)
-  let build_struct_assign str values builder =
-  let assign (llv, ind) value =
-    match value with
-    | Some v -> (L.build_insertvalue llv v ind "" builder, ind+1)
-    | None -> (llv, ind+1)
-  in
-  let (ret, _) = Array.fold_left assign (str, 0) values in ret
   
   let function_decls =
     let function_decl m fdecl =
