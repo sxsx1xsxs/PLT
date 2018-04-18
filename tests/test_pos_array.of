@@ -1,4 +1,6 @@
 
 int main () {
-    int x[5] = [0,0,0,0,0];
+   int x = 5;
+   string y = "dssd";
+   int x[5] = [0,0,0,0,0];
 }

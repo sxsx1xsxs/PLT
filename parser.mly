@@ -127,21 +127,13 @@ expr:
     | NOT expr         { Unop(Not, $2) }
     | expr ASSIGN expr   { Assign($1, $3) }
     | LBK RBK          { Call("create", []) }
-    | expr LBK expr RBK { Array_Index($1, $3) }
+    | ID LBK expr RBK { Array_Index($1, $3) }
     | ID LPR args_opt RPR { Call($1, $3) }
     | LPR expr RPR     { $2 }
 
 expr_list:
     | expr { [$1] }
     | expr_list COMMA expr { $3 :: $1 }
-
-array_list:
-	/* nothing */ { [] }
-	| LBK INT_T RBK array_list { $2 :: $4 }
-
-bind:
-	| typ ID array_list
-	{ List.fold_right (fun l (name, typ) -> (name, Arr(typ, l))) $3 ($2, $1) }
 
 args_opt:
     { [] }
