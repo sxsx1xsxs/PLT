@@ -7,13 +7,10 @@ and sx =
 	SLiteral of int               | SBoolLit of bool
 	| SFliteral of float          | SId of string
 	| SSliteral of string         | SBinop of sexpr * op * sexpr 
-	| SUnop of uop * sexpr         | SAssign of string * sexpr   
+	| SUnop of uop * sexpr         | SAssign of sexpr * sexpr   
 	| SCall of string * sexpr list | SNoexpr
-	| SRetrieve of string * sexpr
-	| SArray_Assign of string * sexpr * sexpr
-	| SArray_F_Lit of (string * float) list 
-	| SArray_S_Lit of (string * string) list
-	| SArray_I_Lit of (string * int) list
+    | SArray_Index of sexpr * sexpr
+    | SArray_Lit of sexpr list
 	
 type sstmt = 
 	SBlock of sstmt list | SExpr of sexpr | SReturn of sexpr

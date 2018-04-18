@@ -174,6 +174,7 @@ let translate (globals, functions) =
 	
 	(* Construct code for an expression used for assignment; return its value *)
     let rec lexpr builder g_map l_map = function
+	  | A.Id s -> L.build_load (lookup s g_map l_map) s builder
 	  | A.Assign (l, r) ->
         let l', r' = lexpr builder g_map l_map l, expr builder g_map l_map r in
         ignore (L.build_store r' l' builder); l'
