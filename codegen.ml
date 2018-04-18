@@ -22,7 +22,7 @@ module StringMap = Map.Make(String)
 (* Helper function for assigning struct values. *)
 let build_struct_assign str values builder =
   let assign (llv, ind) value =
-    match value with
+    match value with 
     | Some v -> (L.build_insertvalue llv v ind "" builder, ind+1)
     | None -> (llv, ind+1)
   in
