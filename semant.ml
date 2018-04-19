@@ -11,33 +11,11 @@ module StringMap = Map.Make(String)
    Check each global variable, then check each function *)
 
 
-let fstt (a, b, c) = a in
-let sndt (a, b, c) = b in 
-
 let check (globals, functions) =
 
-  (* Check if a certain kind of binding has void type or is a duplicate
-     of another, previously checked binding *)
-  let check_var_decl (kind : string) (var_list : var_decl list) = 
-    let check_it checked var_decl = 
-      let void_err = "illegal void " ^ kind ^ " " ^ sndt var_decl
-      and dup_err = "duplicate " ^ kind ^ " " ^ sndt var_decl
-      in match var_decl with
-        (* No void bindings *)
-        (Void, _, _) -> raise (Failure void_err)
-      | (ty1, n1, e) -> match (expr e) with
-                      | (ty2, _) when ty1 != ty2 -> raise (Failure "type " ^ string_of_typ ty1 ^ " does not match type " ^ string_of_typ ty2 ^" in the variable declaration " ^ string_of_vdecl var_decl)
-                      | _ -> match checked with
-                    (* No duplicate variable_declarations *)
-                            ((_, n2, _) :: _) when n1 = n2 -> raise (Failure dup_err)
-                            | _ -> var_decl :: checked
-    in let _ = List.fold_left check_it [] (List.sort compare to_check) 
-       in to_check
-  in 
-
-  (**** Checking Global Variables ****)
-
-  let globals' = check_binds "global" globals in
+  let sndt x = match x with 
+                |VarDecl (_, b, _) -> b 
+  in
 
   (**** Checking Functions ****)
 
@@ -45,10 +23,11 @@ let check (globals, functions) =
   (* Collect function declarations for built-in functions: no bodies *)
   let built_in_decls = 
     let add_bind map (name, ty) = StringMap.add name {
-      typ = Void; fname = name; 
-      formals = [(ty, "x")];
+      ftyp = Void; fname = name; 
+      formals = [VarDecl (ty, "x", Noexpr)];
       locals = []; body = [] } map
     in List.fold_left add_bind StringMap.empty [ ("print", Int);
+                                ("prints", String);
 			                         ("printb", Bool);
 			                         ("printf", Float);
 			                         ("printbig", Int) ]
@@ -78,10 +57,39 @@ let check (globals, functions) =
 
   let _ = find_func "main" in (* Ensure "main" is defined *)
 
-  let check_function func =
+
+
+      (* Check if a certain kind of binding has void type or is a duplicate
+     of another, previously checked binding *)
+  let check_var_decl (kind : string) (var_list : var_decl list) = 
+    let check_it checked var_decl = 
+      let void_err = "illegal void " ^ kind ^ " " ^ sndt var_decl
+      and dup_err = "duplicate " ^ kind ^ " " ^ sndt var_decl
+      in match var_decl with
+        (* No void bindings *)
+        VarDecl (Void, _, _) -> raise (Failure void_err)
+      | VarDecl (_, n1, _) ->
+(*       | (ty1, n1, e) -> match (expr e) with
+                      | (ty2, _) when ty1 != ty2 -> raise (Failure "type " ^ string_of_typ ty1 ^ " does not match type " ^ string_of_typ ty2 ^" in the variable declaration " ^ string_of_vdecl var_decl)
+                      | _ ->  *)
+
+                      match checked with
+                    (* No duplicate variable_declarations *)
+                            (VarDecl (_, n2, _) :: _) when n1 = n2 -> raise (Failure dup_err)
+                            | _ -> var_decl :: checked
+    in let _ = List.fold_left check_it [] (List.sort compare var_list) 
+       in var_list
+  in 
+
+
+  (**** Checking Global Variables ****)
+
+  let globals' = check_var_decl "global" globals in
+
+    let check_function func =
     (* Make sure no formals or locals are void or duplicates *)
-    let formals' = check_binds "formal" func.formals in
-    let locals' = check_binds "local" func.locals in
+    let formals' = check_var_decl "formal" func.formals in
+    let locals' = check_var_decl "local" func.locals in
 
     (* Raise an exception if the given rvalue type cannot be assigned to
        the given lvalue type *)
@@ -89,9 +97,11 @@ let check (globals, functions) =
        if lvaluet = rvaluet then lvaluet else raise (Failure err)
     in   
 
-    (* Build local symbol table of variables for this function *)
-    let symbols = List.fold_left (fun m (ty, name) -> StringMap.add name ty m)
-	                StringMap.empty (globals' @ formals' @ locals' )
+    
+(* Build local symbol table of variables for this function *)
+    let symbols = List.fold_left (fun m x -> match x with 
+                                                  |VarDecl(ty, name, _) -> StringMap.add name ty m)
+                  StringMap.empty (globals' @ formals' @ locals')
     in
 
     (* Return a variable from our local symbol table *)
@@ -101,7 +111,8 @@ let check (globals, functions) =
     in
 
 
-    (* Return a semantically-checked expression, i.e., with a type *)
+
+(* Return a semantically-checked expression, i.e., with a type *)
     let rec expr = function
         Literal  l -> (Int, SLiteral l)
       | Fliteral l -> (Float, SFliteral l)
@@ -138,7 +149,7 @@ let check (globals, functions) =
                      when same && (t1 = Int || t1 = Float) -> Bool
           | And | Or when same && t1 = Bool -> Bool
           | _ -> raise (
-	      Failure ("illegal binary operator " ^
+        Failure ("illegal binary operator " ^
                        string_of_typ t1 ^ " " ^ string_of_op op ^ " " ^
                        string_of_typ t2 ^ " in " ^ string_of_expr e))
           in (ty, SBinop((t1, e1'), op, (t2, e2')))
@@ -148,14 +159,15 @@ let check (globals, functions) =
           if List.length args != param_length then
             raise (Failure ("expecting " ^ string_of_int param_length ^ 
                             " arguments in " ^ string_of_expr call))
-          else let check_call (ft, _, _) e = 
+          else let check_call x e = match x with
+          |VarDecl(ft, _, _) ->
             let (et, e') = expr e in 
             let err = "illegal argument found " ^ string_of_typ et ^
               " expected " ^ string_of_typ ft ^ " in " ^ string_of_expr e
             in (check_assign ft et err, e')
           in 
           let args' = List.map2 check_call fd.formals args
-          in (fd.typ, SCall(fname, args'))
+          in (fd.ftyp, SCall(fname, args'))
     in
 
     let check_bool_expr e = 
@@ -172,10 +184,10 @@ let check (globals, functions) =
 	  SFor(expr e1, check_bool_expr e2, expr e3, check_stmt st)
       | While(p, s) -> SWhile(check_bool_expr p, check_stmt s)
       | Return e -> let (t, e') = expr e in
-        if t = func.typ then SReturn (t, e') 
+        if t = func.ftyp then SReturn (t, e') 
         else raise (
 	  Failure ("return gives " ^ string_of_typ t ^ " expected " ^
-		   string_of_typ func.typ ^ " in " ^ string_of_expr e))
+		   string_of_typ func.ftyp ^ " in " ^ string_of_expr e))
 	    
 	    (* A block is correct if each statement is correct and nothing
 	       follows any Return statement.  Nested blocks are flattened. *)
@@ -189,7 +201,7 @@ let check (globals, functions) =
           in SBlock(check_stmt_list sl)
 
     in (* body of check_function *)
-    { styp = func.typ;
+    { sftyp = func.ftyp;
       sfname = func.fname;
       sformals = formals';
       slocals  = locals';

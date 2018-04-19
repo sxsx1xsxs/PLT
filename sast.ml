@@ -22,13 +22,13 @@ type sstmt =
 		  
 type sinit = typ * string * sexpr
 
-type svar_decl = typ * string * sexpr
+type svar_decl = SVarDecl of typ * string * sexpr
 
 type sfunc_decl = {
         sftyp    : typ;
         sfname   : string;
-        sformals : svar_decl list;
-        slocals  : svar_decl list;
+        sformals : var_decl list;
+        slocals  : var_decl list;
         sbody    : sstmt list;
 }
 
