@@ -17,6 +17,7 @@ let quote_remover a = String.sub a 1 ((String.length a) - 2);;
 %token <string> ID REGEX_STRING STRING_T
 %token <int> INT_T
 %token <float> FLOAT_T
+%token <bool> BOOL_T
 
 %nonassoc ELSE
 %right ASSIGN
@@ -110,6 +111,7 @@ expr:
       STRING_T           { Sliteral(quote_remover($1)) }
     | FLOAT_T            { Fliteral($1) }
     | INT_T              { Literal($1)  }
+    | BOOL_T             { BoolLit($1)  }
     | ID                 { Id($1) }
 	| LBK expr_list RBK  { Array_Lit($2) }
     | expr PLUS   expr   { Binop($1, Add,   $3) }

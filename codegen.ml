@@ -156,6 +156,8 @@ let translate (globals, functions) =
     and int_format_str = L.build_global_stringptr "%d\n" "fmt" builder
     (* and string_format_str = L.build_global_stringptr "%s\n" "fmt2" builder *) 
     and float_format_str = L.build_global_stringptr "%f\n" "fmt" builder
+    and true_format_str = L.build_global_stringptr "true\n" "fmt" builder
+    and false_format_str = L.build_global_stringptr "false\n" "fmt" builder
     in
 
 
@@ -252,8 +254,15 @@ let translate (globals, functions) =
       (*| Call ("prints", [_]) -> L.build_call prints_func [| str_format_str |] "prints" builder*)
       | A.Call ("prints", [e]) -> L.build_call printf_func [| char_format_str; (expr builder g_map l_map e)|] "printf" builder
       | A.Call ("print", [e]) | A.Call ("printb", [e]) ->
-	  L.build_call printf_func [| int_format_str ; (expr builder g_map l_map e) |]
-	    "printf" builder
+          let e' = expr builder g_map l_map e in
+          if L.type_of e' = i32_t then
+	    L.build_call printf_func [| int_format_str ; e' |] "printf" builder
+          else
+            let result = L.const_select e' (L.const_null i32_t) (L.const_int i32_t 1) in
+            if L.is_null result then
+                L.build_call printf_func [| true_format_str; |] "printf" builder
+            else
+                L.build_call printf_func [| false_format_str; |] "printf" builder
       | A.Call ("printbig", [e]) ->
 	  L.build_call printbig_func [| (expr builder g_map l_map e) |] "printbig" builder
       | A.Call ("printf", [e]) -> 
