@@ -1,0 +1,6 @@
+int main () {
+   int product = 1;
+   int b = 2;
+   int a = 3;
+    print (a-b);
+}
