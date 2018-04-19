@@ -2,7 +2,8 @@
 int main () {
    int x = 5;
    string y = "dssd";
-   prints(y);
    int x[5] = [0,0,0,0,0];
+
+   prints(y);
    printb(x[0]);
 }
