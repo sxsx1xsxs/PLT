@@ -53,6 +53,7 @@ typ:
     | FLOAT { Float }
     | BOOL { Bool }
     | INT { Int }
+    /* | ARR { Arr(typ, Int)} */
 
 formal_list:
                     { [] }

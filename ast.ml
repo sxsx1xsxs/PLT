@@ -12,7 +12,7 @@ type expr = Literal of int             | BoolLit of bool
           | Sliteral of string         | Binop of expr * op * expr 
           | Unop of uop * expr         | Assign of expr * expr   
           | Call of string * expr list | Noexpr
-          | Array_Index of expr * expr
+          | Array_Index of string * expr
           | Array_Lit of expr list
 
 
@@ -96,7 +96,7 @@ let rec string_of_expr = function
       f ^ "(" ^ String.concat ", " (List.map string_of_expr el) ^ ")"
   | Noexpr -> ""
   | Array_Lit l -> "[" ^ String.concat ", " (List.map string_of_expr l) ^ "]"
-  | Array_Index (e, ind) -> string_of_expr e ^ "[" ^ string_of_expr ind ^ "]"
+  | Array_Index (e, ind) -> e ^ "[" ^ string_of_expr ind ^ "]"
   
 let rec string_of_stmt = function
     Block(stmts) ->

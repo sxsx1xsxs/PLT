@@ -75,9 +75,6 @@ let translate (globals, functions) =
     | A.Void -> L.const_int void_t 0
     | A.Float -> L.const_float float_t 0.0
     | A.Arr (typ, len)-> global_init_expr(A.Array_Lit [])
-    (* | A.Array_f -> L.const_pointer_null void_p
-    | A.Array_s -> L.const_pointer_null void_p
-    | A.Array_i -> L.const_pointer_null void_p *)
   in
 
   let local_init_expr = function
@@ -86,7 +83,7 @@ let translate (globals, functions) =
       | A.Sliteral s -> let l = L.define_global "" (L.const_stringz context s) the_module in L.const_bitcast (L.const_gep l [| L.const_int i32_t 0|]) str_t
       | A.Fliteral f -> L.const_float float_t f
       | A.Noexpr -> L.const_int i32_t 0
-	  | A.Array_Lit l ->
+      | A.Array_Lit l ->
         let lll = Array.of_list (List.map global_init_expr l) in
         let typ = L.type_of (Array.get lll 0) in
         L.const_array typ lll
@@ -99,10 +96,7 @@ let translate (globals, functions) =
       | A.String -> global_init_expr(A.Sliteral "")
       | A.Void -> L.const_int void_t 0
       | A.Float -> L.const_float float_t 0.0
-	    | A.Arr (typ, len) -> local_init_expr(A.Array_Lit [])
-      (* | A.Array_f -> L.const_pointer_null void_p
-      | A.Array_s -> L.const_pointer_null void_p
-      | A.Array_i -> L.const_pointer_null void_p *)
+      | A.Arr (typ, len) -> local_init_expr(A.Array_Lit [])
   in
 
   let printf_t = L.var_arg_function_type i32_t [| str_t |] in
@@ -180,7 +174,7 @@ let translate (globals, functions) =
         let l', r' = lexpr builder g_map l_map l, expr builder g_map l_map r in
         ignore (L.build_store r' l' builder); l'
 	  | A.Array_Index (arr, ind) ->
-        let arr' = lexpr builder g_map l_map arr in
+        let arr' = L.build_load (lookup arr g_map l_map) arr builder in
         let ind' = expr builder g_map l_map ind in
         L.build_gep arr' [|L.const_null i32_t; ind'|] "Array_Index" builder
 	  | _ -> raise (Failure ("not found"))(* Semant should catch other illegal attempts at assignment *)
@@ -250,7 +244,7 @@ let translate (globals, functions) =
 		let lll = List.map (fun x -> Some x) lll in
 		build_struct_assign (L.undef typ) (Array.of_list lll) builder
 	  | A.Array_Index (arr, ind) ->
-	    let arr', ind' = expr builder g_map l_map arr, expr builder g_map l_map ind in
+	    let arr', ind' = L.build_load (lookup arr g_map l_map) arr builder, expr builder g_map l_map ind in
 		let arr_ptr = L.build_alloca (L.type_of arr') "arr" builder in
 		ignore (L.build_store arr' arr_ptr builder);
 		L.build_load (L.build_gep arr_ptr [|L.const_null i32_t; ind'|] "" builder) "Array_Index" builder
