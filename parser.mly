@@ -110,27 +110,27 @@ expr:
       STRING_T           { Sliteral(quote_remover($1)) }
     | FLOAT_T            { Fliteral($1) }
     | INT_T              { Literal($1)  }
-    | ID               { Id($1) }
-	| LBK expr_list RBK { Array_Lit($2) }
-    | expr PLUS   expr { Binop($1, Add,   $3) }
-    | expr MINUS  expr { Binop($1, Sub,   $3) }
-    | expr TIMES  expr { Binop($1, Mult,  $3) }
-    | expr DIVIDE expr { Binop($1, Div,   $3) }
-    | expr EQ     expr { Binop($1, Equal, $3) }
-    | expr NEQ    expr { Binop($1, Neq,   $3) }
-    | expr RL     expr { Binop($1, Less,  $3) }
-    | expr LEQ    expr { Binop($1, Leq,   $3) }
-    | expr LR     expr { Binop($1, Greater, $3) }
-    | expr REQ    expr { Binop($1, Geq,   $3) }
-    | expr AND    expr { Binop($1, And,   $3) }
-    | expr OR     expr { Binop($1, Or,    $3) }
-    | MINUS       expr { Unop(Neg, $2) }
-    | NOT expr         { Unop(Not, $2) }
+    | ID                 { Id($1) }
+	| LBK expr_list RBK  { Array_Lit($2) }
+    | expr PLUS   expr   { Binop($1, Add,   $3) }
+    | expr MINUS  expr   { Binop($1, Sub,   $3) }
+    | expr TIMES  expr   { Binop($1, Mult,  $3) }
+    | expr DIVIDE expr   { Binop($1, Div,   $3) }
+    | expr EQ     expr   { Binop($1, Equal, $3) }
+    | expr NEQ    expr   { Binop($1, Neq,   $3) }
+    | expr RL     expr   { Binop($1, Less,  $3) }
+    | expr LEQ    expr   { Binop($1, Leq,   $3) }
+    | expr LR     expr   { Binop($1, Greater, $3) }
+    | expr REQ    expr   { Binop($1, Geq,   $3) }
+    | expr AND    expr   { Binop($1, And,   $3) }
+    | expr OR     expr   { Binop($1, Or,    $3) }
+    | MINUS       expr   { Unop(Neg, $2) }
+    | NOT expr           { Unop(Not, $2) }
     | expr ASSIGN expr   { Assign($1, $3) }
-    | LBK RBK          { Call("create", []) }
-    | ID LBK expr RBK { Array_Index($1, $3) }
+    | LBK RBK            { Call("create", []) }
+    | ID LBK expr RBK    { Array_Index($1, $3) }
     | ID LPR args_opt RPR { Call($1, $3) }
-    | LPR expr RPR     { $2 }
+    | LPR expr RPR       { $2 }
 
 expr_list:
     | expr { [$1] }
