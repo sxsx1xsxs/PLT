@@ -1,7 +1,0 @@
-array_int a = [];
-array_int b = ["one" = 1, "five" = 5];
-int main () {
-    string key = "four";
-    int value = 4;
-    b[key] = value;
-}

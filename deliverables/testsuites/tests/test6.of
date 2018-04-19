@@ -1,9 +1,0 @@
-/*postive test*/
-
-int mod (int a, int b)
-{
-    while (a - b > 0) { 
-        a = a - b;
-    }
-    return a;
-}
