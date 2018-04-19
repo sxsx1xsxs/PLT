@@ -155,7 +155,7 @@ let translate (globals, functions) =
     let char_format_str = L.build_global_stringptr "%s\n" "fmt" builder
     and int_format_str = L.build_global_stringptr "%d\n" "fmt" builder
     (* and string_format_str = L.build_global_stringptr "%s\n" "fmt2" builder *) 
-    and float_format_str = L.build_global_stringptr "f\n" "fmt" builder
+    and float_format_str = L.build_global_stringptr "%f\n" "fmt" builder
     in
 
 
