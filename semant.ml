@@ -27,7 +27,7 @@ let check (globals, functions) =
       formals = [VarDecl (ty, "x", Noexpr)];
       locals = []; body = [] } map
     in List.fold_left add_bind StringMap.empty [ ("print", Int);
-                                ("prints", String);
+                                     ("prints", String);
 			                         ("printb", Bool);
 			                         ("printf", Float);
 			                         ("printbig", Int) ]

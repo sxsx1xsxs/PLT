@@ -65,7 +65,7 @@ let translate (globals, functions) =
       let lll = Array.of_list (List.map global_init_expr l) in
       let typ = L.type_of (Array.get lll 0) in
       L.const_array typ lll
-    | _ -> raise (Failure ("not found"))
+    | _ -> raise (Failure ("global init not found"))
   in
 
   let global_init_noexpr = function
@@ -87,7 +87,7 @@ let translate (globals, functions) =
         let lll = Array.of_list (List.map global_init_expr l) in
         let typ = L.type_of (Array.get lll 0) in
         L.const_array typ lll
-      | _ -> raise (Failure ("not found"))
+      | _ -> raise (Failure ("local init not found"))
   in
 
   let local_init_noexpr = function
@@ -171,14 +171,11 @@ let translate (globals, functions) =
 	
 	(* Construct code for an expression used for assignment; return its value *)
     let rec lexpr builder g_map l_map = function
-	  | A.Id s -> L.build_load (lookup s g_map l_map) s builder
-	  | A.Assign (l, r) ->
-        let l', r' = lexpr builder g_map l_map l, expr builder g_map l_map r in
-        ignore (L.build_store r' l' builder); l'
+	  | A.Id s -> (lookup s g_map l_map)
 	  | A.Array_Index (arr, ind) ->
-        let arr' = L.build_load (lookup arr g_map l_map) arr builder in
+        let arr' = lookup arr g_map l_map in
         let ind' = expr builder g_map l_map ind in
-        L.build_gep arr' [|L.const_null i32_t; ind'|] "Array_Index" builder
+        L.build_in_bounds_gep arr' [|L.const_int i32_t 0; ind'|] "int" builder
 	  | _ -> raise (Failure ("not found"))(* Semant should catch other illegal attempts at assignment *)
 		
     (* Construct code for an expression; return its value *)
@@ -239,7 +236,9 @@ let translate (globals, functions) =
                          let e2'  = (expr builder g_map l_map e2) in
 						 ignore (L.build_store e2' l_val builder); e2'
 	  *)
-	  | A.Assign _ as e -> L.build_load (lexpr builder g_map l_map e) "" builder
+	  | A.Assign (e1, e2) -> let e1' = lexpr builder g_map l_map e1 in
+                             let e2' = expr builder g_map l_map e2 in
+                             ignore(L.build_store e2' e1' builder); e1'
 	  | A.Array_Lit l ->
 	    let lll = List.map (expr builder g_map l_map) l in
 		let typ = (L.array_type (L.type_of (List.hd lll)) (List.length l)) in
