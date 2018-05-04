@@ -62,7 +62,16 @@ rule token pat = parse
 
   and regex pat = parse
   | "@" { pat := NORMAL ; REGEX }
-  | _ as lit {REGEX_STRING(Char.escaped lit)}
+  | '\\'['"' '.' '?' '|' '^' '[' ']' '(' ')' '\\' '*'] as lit { REGEX_STRING(lit) }
+  | '.' { DOT  }
+  | '^' { HAT  }
+  | '?' { QUST }
+  | '*' { KLEN }
+  | '[' { LBRK }
+  | ']' { RBRK }
+  | '(' { LPRT }
+  | ')' { RPRT }
+  | [^'"' '.' '@' '|' '^' '?' '[' ']' '(' ')' '\\' '*'] as lit {REGEX_STRING(Char.escaped lit)}
 
   {
     let next_token lexbuf = match !state_ref with

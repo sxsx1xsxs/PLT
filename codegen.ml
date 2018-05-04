@@ -108,25 +108,7 @@ let translate (globals, functions) =
   let strlen_t = L.function_type float_t [| str_t |] in
   let strlen_func = L.declare_function "strlen" strlen_t the_module in
   
-  (* let create_t = L.function_type void_p [||] in
-  let create_func = L.declare_function "create" create_t the_module in
-  *)
-  (*
-  let array_add_string_t = L.function_type i32_t [|void_p ; str_t ; str_t|] in
-  let array_add_string_func = L.declare_function "array_add_string" array_add_string_t the_module in
 
-  let array_retrieve_string_t = L.function_type str_t [|void_p ; str_t|] in
-  let array_retrieve_string_func = L.declare_function "array_retrieve_string" array_retrieve_string_t the_module in
-
-  let array_add_float_t = L.function_type i32_t [|void_p ; str_t ; float_t|] in
-  let array_add_float_func = L.declare_function "array_add_float" array_add_float_t the_module in
-
-  let array_retrieve_float_t = L.function_type float_t [|void_p ; str_t|] in
-  let array_retrieve_float_func = L.declare_function "array_retrieve_float" array_retrieve_float_t the_module in
-  *)
-  
-
-  
   let function_decls =
     let function_decl m fdecl =
       let name = fdecl.A.fname
@@ -225,17 +207,7 @@ let translate (globals, functions) =
 	  let e' = expr builder g_map l_map e in
 	  (match op with
 	  | A.Neg                  -> L.build_neg
-          | A.Not                  -> L.build_not) e' "tmp" builder
-
-      (* assume only float need semantic checking *)
-	  (*
-      | A.Array_Index (s, e) -> L.build_call array_retrieve_float_func [|(L.build_load (lookup s g_map l_map) s builder) ; (expr builder g_map l_map e)|] "array_retrieve" builder
-      | A.Array_Assign (s, i, e) -> L.build_call array_add_float_func [|(L.build_load (lookup s g_map l_map) s builder) ; (expr builder g_map l_map i) ; (expr builder g_map l_map e)|]
-            "array_add_float" builder
-      | A.Assign (e1, e2) -> let l_val = (lookup e1 g_map l_map) in
-                         let e2'  = (expr builder g_map l_map e2) in
-						 ignore (L.build_store e2' l_val builder); e2'
-	  *)
+      | A.Not                  -> L.build_not) e' "tmp" builder
 	  | A.Assign (e1, e2) -> let e1' = lexpr builder g_map l_map e1 in
                              let e2' = expr builder g_map l_map e2 in
                              ignore(L.build_store e2' e1' builder); e1'
@@ -252,45 +224,25 @@ let translate (globals, functions) =
 	  
       (*| Call ("prints", [_]) -> L.build_call prints_func [| str_format_str |] "prints" builder*)
       | A.Call ("prints", [e]) -> L.build_call printf_func [| char_format_str; (expr builder g_map l_map e)|] "printf" builder
-      | A.Call ("print", [e]) | A.Call ("printb", [e]) ->
-          let e' = expr builder g_map l_map e in
-          if L.type_of e' = i32_t then
-	    L.build_call printf_func [| int_format_str ; e' |] "printf" builder
-          else
+      | A.Call ("print", [e]) -> L.build_call printf_func [| int_format_str ; (expr builder g_map l_map e) |] "printf" builder
+	  | A.Call ("printb", [e]) -> let e' = expr builder g_map l_map e in
             let result = L.const_select e' (L.const_null i32_t) (L.const_int i32_t 1) in
             if L.is_null result then
                 L.build_call printf_func [| true_format_str; |] "printf" builder
             else
                 L.build_call printf_func [| false_format_str; |] "printf" builder
-      | A.Call ("printbig", [e]) ->
-	  L.build_call printbig_func [| (expr builder g_map l_map e) |] "printbig" builder
-      | A.Call ("printf", [e]) -> 
-	  L.build_call printf_func [| float_format_str ; (expr builder g_map l_map e) |]
-	    "printf" builder
-      | A.Call ("strlen", [e]) ->
-    L.build_call strlen_func [|expr builder g_map l_map e|] 
-    "strlen" builder
-    (*  | A.Call ("array_add_string", [a;b;c]) ->
-    L.build_call array_add_string_func [|(expr builder g_map l_map a) ; (expr builder g_map l_map b) ; (expr builder g_map l_map c)|] 
-    "array_add_string" builder
-      | A.Call ("array_retrieve_string", [a; b]) ->
-    L.build_call array_retrieve_string_func [|(expr builder g_map l_map a) ; (expr builder g_map l_map b)|]
-    "array_retrieve_string" builder
-      | A.Call ("array_add_float", [a; b; c]) ->
-    L.build_call array_add_float_func [|(expr builder g_map l_map a) ; (expr builder g_map l_map b) ; (expr builder g_map l_map c)|]
-    "array_add_float" builder
-      | A.Call ("array_retrieve_float", [a; b]) ->
-    L.build_call array_retrieve_float_func [|(expr builder g_map l_map a) ; (expr builder g_map l_map b)|]
-    "array_retrieve_float" builder *)
+      | A.Call ("printbig", [e]) -> L.build_call printbig_func [| (expr builder g_map l_map e) |] "printbig" builder
+      | A.Call ("printf", [e]) -> L.build_call printf_func [| float_format_str ; (expr builder g_map l_map e) |] "printf" builder
+      | A.Call ("strlen", [e]) -> L.build_call strlen_func [|expr builder g_map l_map e|] "strlen" builder
       | A.Call (f, act) ->
-         let (fdef, fdecl) = try StringMap.find f function_decls with
-                              Not_found -> raise (Failure "Founction not declared")
-          in
-	 let actuals = List.rev (List.map (expr builder g_map l_map) (List.rev act)) in
-	 let result = (match fdecl.A.ftyp with 
-                        A.Void -> ""
-                      | _ -> f ^ "_result") in
-         L.build_call fdef (Array.of_list actuals) result builder
+        let (fdef, fdecl) = try StringMap.find f function_decls with
+                            Not_found -> raise (Failure "Founction not declared")
+		in
+	 		let actuals = List.rev (List.map (expr builder g_map l_map) (List.rev act)) in
+	 	   	let result = (match fdecl.A.ftyp with 
+                          A.Void -> ""
+                        | _ -> f ^ "_result") in
+        L.build_call fdef (Array.of_list actuals) result builder
     in
 	
     (* Declare each global variable; remember its value in a map *)

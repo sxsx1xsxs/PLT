@@ -1,4 +1,4 @@
 int main(){
-    string s = "Hello Motherfucking World!";
+    string s = "Hello World!";
     prints(s);
 }

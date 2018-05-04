@@ -27,8 +27,9 @@ let check (globals, functions) =
       formals = [VarDecl (ty, "x", Noexpr)];
       locals = []; body = [] } map
     in List.fold_left add_bind StringMap.empty [ ("print", Int);
+                                	 ("prints", String);
+									 ("printb", Bool);
                                      ("prints", String);
-			                         ("printb", Bool);
 			                         ("printf", Float);
 			                         ("printbig", Int) ]
   in
@@ -127,7 +128,7 @@ let check (globals, functions) =
         | _ -> failwith ("expected integer index " ^ string_of_expr ind ^
                          " in " ^ string_of_expr e)
       in
-(*       let elem_type, arr' =
+     (* let elem_type, arr' =
         match expr arr with
         | Arr (t, _), arr' -> t, arr'
         | _ -> failwith ("expected array " ^ string_of_expr arr ^
