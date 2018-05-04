@@ -146,8 +146,20 @@ args_list:
     | args_list COMMA expr { $3 :: $1 }
 
 /* start of regex */
-single_regex:
-    REGEX_STRING { $1 }
+
+regex:
+      REGEX_STRING { $1 }
+	| DOT {'.'}
+	| LPRT regex_list RPRT {"(" ^ $2 ^ ")"}
+	| LBRK regex_set LBRK  {"[" ^ $2 ^ "]"}
+	| regex RPLS           { $1 ^ '+' }
+	| regex KLEN           { $1 ^ '*' }
+	| regex QUST		   { $1 ^ '?' }
+		
+regex_list:
+	  regex                { $1 }
+	| regex regex_list     { $1^$2 }
+
 /* end of regex */
 
 /* missing stuff: arrays, actuals, noelse, <string> REGEX_STRING as a token*/
