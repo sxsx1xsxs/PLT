@@ -14,6 +14,7 @@ let quote_remover a = String.sub a 1 ((String.length a) - 2);;
 %token RAPPEND LAPPEND LR RL AND OR NOT
 %token REGEX EOF ASSIGN 
 %token RETURN BOOL VOID FLOAT STRING INT
+%token DOT HAT QUST KLEN RPLS ALTR LBRK RBRK LPRT RPRT 
 %token <string> ID REGEX_STRING STRING_T
 %token <int> INT_T
 %token <float> FLOAT_T
@@ -151,15 +152,26 @@ regex:
       REGEX_STRING { $1 }
 	| DOT {'.'}
 	| LPRT regex_list RPRT {"(" ^ $2 ^ ")"}
-	| LBRK regex_set LBRK  {"[" ^ $2 ^ "]"}
+	| LBRK regex_set_list LBRK  {"[" ^ $2 ^ "]"}
 	| regex RPLS           { $1 ^ '+' }
 	| regex KLEN           { $1 ^ '*' }
 	| regex QUST		   { $1 ^ '?' }
+	| regex ALTR regex     { $1 ^ '|' ^ $2 }
 		
 regex_list:
 	  regex                { $1 }
 	| regex regex_list     { $1^$2 }
 
+regex_set_list:
+	  regex_set {$1}
+	| regex_set regex_set_list { $1^$2 }
+
+regex_set:
+	  REGEX_STRING {$1}
+	| REGEX_STRING RANG REGEX_STRING {$1^'-'^$3}
+	| HAT regex_set {'^'^$2}
+	| LBRK regex_set_list RBRK {'[' ^ $2 ^ ']'}
+	
 /* end of regex */
 
 /* missing stuff: arrays, actuals, noelse, <string> REGEX_STRING as a token*/
