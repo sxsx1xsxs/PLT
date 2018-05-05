@@ -19,13 +19,13 @@ module A = Ast
 module StringMap = Map.Make(String)
 
   (* Helper function for assigning struct values. *)
-  let build_struct_assign str values builder =
+  let build_struct_assign str values len builder =
   let assign (llv, ind) value =
     match value with
-    | Some v -> (L.build_insertvalue llv v ind "" builder, ind+1)
-    | None -> (llv, ind+1)
+    | Some v -> (L.build_insertvalue llv v  ind "" builder, (ind-1))
+    | None -> (llv, ind-1)
   in
-  let (ret, _) = Array.fold_left assign (str, 0) values in ret
+  let (ret, _) = Array.fold_left assign (str, len) values in ret
 
 let translate (globals, functions) =
     (* Code Generation from the SAST. Returns an LLVM module if successful,
@@ -154,8 +154,7 @@ let translate (globals, functions) =
     let rec lexpr builder g_map l_map = function
 	  | A.Id s -> (lookup s g_map l_map)
 	  | A.Array_Index (arr, ind) ->
-        let arr' = lookup arr g_map l_map in
-        let ind' = expr builder g_map l_map ind in
+        let arr', ind' = lookup arr g_map l_map, expr builder g_map l_map ind in
         L.build_in_bounds_gep arr' [|L.const_int i32_t 0; ind'|] "int" builder
 	  | _ -> raise (Failure ("not found"))(* Semant should catch other illegal attempts at assignment *)
 		
@@ -222,14 +221,13 @@ let translate (globals, functions) =
                              ignore(L.build_store e2' e1' builder); e1'
 	  | A.Array_Lit l ->
 	    let lll = List.map (expr builder g_map l_map) l in
-		let typ = (L.array_type (L.type_of (List.hd lll)) (List.length l)) in
+        let len = List.length l in
+		let typ = (L.array_type (L.type_of (List.hd lll)) (len)) in
 		let lll = List.map (fun x -> Some x) lll in
-		build_struct_assign (L.undef typ) (Array.of_list lll) builder
+		build_struct_assign (L.undef typ) (Array.of_list lll) len builder
 	  | A.Array_Index (arr, ind) ->
-	    let arr', ind' = L.build_load (lookup arr g_map l_map) arr builder, expr builder g_map l_map ind in
-		let arr_ptr = L.build_alloca (L.type_of arr') "arr" builder in
-		ignore (L.build_store arr' arr_ptr builder);
-		L.build_load (L.build_gep arr_ptr [|L.const_null i32_t; ind'|] "" builder) "Array_Index" builder
+	    let arr', ind' = lookup arr g_map l_map, expr builder g_map l_map ind in
+		L.build_load (L.build_gep arr' [|L.const_null i32_t; ind'|] "" builder) "Array_Index" builder
 	  
       (*| Call ("prints", [_]) -> L.build_call prints_func [| str_format_str |] "prints" builder*)
       | A.Call ("prints", [e]) -> L.build_call printf_func [| char_format_str; (expr builder g_map l_map e)|] "printf" builder
