@@ -52,6 +52,7 @@ let translate (globals, functions) =
     | A.Float -> float_t
     | A.Void  -> void_t
     | A.Arr (typ, len) -> L.array_type (ltype_of_typ typ) len
+	| A.Regex -> str_t
   in
 
   let rec global_init_expr = function
@@ -65,6 +66,8 @@ let translate (globals, functions) =
       let lll = Array.of_list (List.map global_init_expr l) in
       let typ = L.type_of (Array.get lll 0) in
       L.const_array typ lll
+	| A.RegexPattern r -> let l = L.define_global "" (L.const_stringz context r) the_module in 
+    L.const_bitcast (L.const_gep l [| L.const_int i32_t 0|]) str_t
     | _ -> raise (Failure ("global init not found"))
   in
 
