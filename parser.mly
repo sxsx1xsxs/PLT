@@ -146,7 +146,7 @@ expr:
     | NOT expr           { Unop(Not, $2) }
     | expr ASSIGN expr   { Assign($1, $3) }
     /*| LBK RBK            { Call("create", []) }*/
-    | expr LBK expr RBK    { Array_Index($1, $3) }
+    | ID LBK expr RBK    { Array_Index($1, $3) }
     | ID LPR args_opt RPR { Call($1, $3) }
     | LPR expr RPR       { $2 }
 
