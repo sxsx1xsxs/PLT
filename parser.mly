@@ -13,9 +13,9 @@ let quote_remover a = String.sub a 1 ((String.length a) - 2);;
 %token PLUS MINUS TIMES DIVIDE MOD EQ NEQ LEQ REQ
 %token RAPPEND LAPPEND LR RL AND OR NOT
 %token REGEX EOF ASSIGN 
-%token RETURN BOOL VOID FLOAT STRING INT
+%token RETURN BOOL VOID FLOAT STRING INT REGEXP
 %token DOT HAT QUST KLEN RPLS ALTR LBRK RBRK LPRT RPRT RANG
-%token <string> ID REGEX_STRING STRING_T
+%token <string> ID STRING_T REGEX_STRING
 %token <int> INT_T
 %token <float> FLOAT_T
 %token <bool> BOOL_T

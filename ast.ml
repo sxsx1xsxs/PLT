@@ -57,14 +57,6 @@ let string_of_op = function
 let string_of_uop = function
     Neg -> "-"
   | Not -> "!"
-
-
-(* let string_of_typ = function
-    Int -> "int"
-  | Bool -> "bool"
-  | Float -> "float"
-  | Void -> "void"
-  | String -> "string" *)
   
 let rec string_of_typ_ps = function
     Int -> "int", ""
@@ -75,6 +67,7 @@ let rec string_of_typ_ps = function
     let pref, suf = string_of_typ_ps typ in
     pref, "[" ^ (string_of_int len) ^ "]" ^ suf
   | String -> "string", ""
+  | Regex -> "regex", ""
 
 let string_of_typ t =
   (* Split by prefix and suffix so array dims are in the right order *)

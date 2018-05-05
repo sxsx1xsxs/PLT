@@ -49,7 +49,7 @@ rule token pat = parse
   | "bool"  {BOOL}
   | "int"   {INT}
   | "string" {STRING}
-  | "regex". {REGEXP}
+  | "regex" {REGEXP}
   | '"' [^'"']* '"' as lit { STRING_T(lit) }
   | ['-']?['0' - '9']+['.']['0' - '9']+ as lxm {FLOAT_T(float_of_string lxm)}
   | ['-']?digits as num { INT_T(int_of_string num) }
