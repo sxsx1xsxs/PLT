@@ -15,6 +15,7 @@ http://llvm.moe/ocaml/
 (* We'll refer to Llvm and Ast constructs with module names *)
 module L = Llvm
 module A = Ast
+open Str
 
 module StringMap = Map.Make(String)
 
@@ -114,8 +115,8 @@ let translate (globals, functions) =
   let strlen_t = L.function_type float_t [| str_t |] in
   let strlen_func = L.declare_function "strlen" strlen_t the_module in
   
-  let of_t = L.var_arg_function_type str_t [| str_t; str_t |] in
-  let of_func = L.declare_function "of" of_t the_module in 
+(* let of_t = L.var_arg_function_type str_t [| str_t; str_t |] in
+  let of_func = L.declare_function "of" of_t the_module in *)
 
   let function_decls =
     let function_decl m fdecl =
@@ -149,15 +150,17 @@ let translate (globals, functions) =
     and true_format_str = L.build_global_stringptr "true\n" "fmt" builder
     and false_format_str = L.build_global_stringptr "false\n" "fmt" builder
     in
-
+	
+	let build_regex r = match r with
+		  A.Sliteral s -> s
+		| A.RegexPattern s -> s
+		| _ -> raise (Failure ("not regex or string"))
+	in
 
     let build_string e builder = 
         let str = L.build_global_stringptr e "str" builder in
         let null = L.const_int i32_t 0 in
     L.build_in_bounds_gep str [| null |] "str" builder in
-
-    (* This is where GM left at Fri. 8:05 PM *)
-
 	
 	(* Construct code for an expression used for assignment; return its value *)
     let rec lexpr builder g_map l_map = function
@@ -178,7 +181,6 @@ let translate (globals, functions) =
       | A.Id s -> L.build_load (lookup s g_map l_map) s builder
 	  | A.RegexPattern r -> build_string r builder
       | A.Binop (e1, op, e2) -> 
-	  (* let (t, _) = e1 *)
 	  let e1' = expr builder g_map l_map e1
 	  and e2' = expr builder g_map l_map e2 in
 	  if (L.type_of e1' = float_t || L.type_of e2' = float_t) then
@@ -230,10 +232,10 @@ let translate (globals, functions) =
 		let arr_ptr = L.build_alloca (L.type_of arr') "arr" builder in
 		ignore (L.build_store arr' arr_ptr builder);
 		L.build_load (L.build_gep arr_ptr [|L.const_null i32_t; ind'|] "" builder) "Array_Index" builder
-
-		  
-      (*| Call ("prints", [_]) -> L.build_call prints_func [| str_format_str |] "prints" builder*)
-	  | A.Call ("of", [e1, e2]) -> let r = Str.regexp e1 in Str.string_match r e2 0; Str.matched_string e2
+  
+      | A.Call ("of", [e1; e2]) -> 
+		  let e1' = expr builder g_map l_map e1 and e2' = expr builder g_map l_map e2 in
+		  let r = regexp (L.string_of_llvalue e1') in string_match r (L.string_of_llvalue e2') 0; build_string (matched_string (L.string_of_llvalue e2')) builder
       | A.Call ("prints", [e]) -> L.build_call printf_func [| char_format_str; (expr builder g_map l_map e)|] "printf" builder
       | A.Call ("print", [e]) -> L.build_call printf_func [| int_format_str ; (expr builder g_map l_map e) |] "printf" builder
 	  | A.Call ("printb", [e]) -> let e' = expr builder g_map l_map e in

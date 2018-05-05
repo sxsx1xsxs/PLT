@@ -29,6 +29,7 @@ let quote_remover a = String.sub a 1 ((String.length a) - 2);;
 %left PLUS MINUS
 %left TIMES DIVIDE
 %right NOT
+%left LPRT RPRT LBRK RBRK ATLR
 
 %start program
 %type <Ast.program> program
@@ -137,13 +138,13 @@ args_list:
 
 regex:
       REGEX_STRING { $1 }
-	| DOT {'.'}
-	| LPRT regex_list RPRT {"\(" ^ $2 ^ "\)"}
-	| LBRK regex_set_list LBRK  {"[" ^ $2 ^ "]"}
-	| regex RPLS           { $1 ^ '+' }
-	| regex KLEN           { $1 ^ '*' }
-	| regex QUST		   { $1 ^ '?' }
-	| regex ALTR regex     { $1 ^ '\|' ^ $3 }
+	| DOT {"."}
+	| LPRT regex_list RPRT {"(" ^ $2 ^ ")"}
+	| LBRK regex_set_list RBRK  {"[" ^ $2 ^ "]"}
+	| regex RPLS           { $1 ^ "+" }
+	| regex KLEN           { $1 ^ "*" }
+	| regex QUST		   { $1 ^ "?" }
+	| regex ALTR           { $1 ^ "|" }
 		
 regex_list:
 	  regex                { $1 }
@@ -155,8 +156,8 @@ regex_set_list:
 
 regex_set:
 	  REGEX_STRING {$1}
-	| REGEX_STRING RANG REGEX_STRING {$1^'-'^$3}
-	| HAT regex_set {'^'^$2}
-	| LBRK regex_set_list RBRK {'[' ^ $2 ^ ']'}
+	| regex RANG regex {$1^"-"^$3}
+	| HAT regex_set {"^"^$2}
+	| LBRK regex_set_list RBRK {"[" ^ $2 ^ "]"}
 	
 /* end of regex */

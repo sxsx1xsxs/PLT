@@ -5,6 +5,7 @@ if __name__ == "__main__":
     test_file = sys.argv[1]
     print ("building the compiler \n")
     os.system("make clean")
+    
     os.system("make all")
 
     print ("producing ir using our compiler \n")
