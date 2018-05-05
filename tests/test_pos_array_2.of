@@ -1,5 +1,7 @@
-
-int main () {
-   int x[2] = [100, 20];
-   printb(x[-1]);
+int main(){
+    int x[5] = [1,1,1,1,1];
+    int b;
+    x[0] = 5;
+    b = x[0];
+    print(b);
 }

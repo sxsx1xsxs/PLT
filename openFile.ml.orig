@@ -7,9 +7,14 @@ let () =
     Arg.parse [] (fun file -> channel := open_in file) usage_msg;
     let lexbuf = Lexing.from_channel !channel in
     let ast = Parser.program Scanner.next_token lexbuf in
-	(*let sast = Semant.check ast in*)
+<<<<<<< HEAD
+
+        let m = Codegen.translate ast in
+=======
+	let sast = Semant.check ast in
 	let m = Codegen.translate ast in
+>>>>>>> 7ea627272e678297b9c93e4f48ede715bea61f7e
 	Llvm_analysis.assert_valid_module m;
 
-    print_string (Llvm.string_of_llmodule m);;
-    (*print_string (Ast.string_of_program ast);;*)
+        print_string (Llvm.string_of_llmodule m);;
+        (*print_string (Ast.string_of_program ast);;*)

@@ -65,7 +65,11 @@ let translate (globals, functions) =
       let lll = Array.of_list (List.map global_init_expr l) in
       let typ = L.type_of (Array.get lll 0) in
       L.const_array typ lll
+<<<<<<< HEAD
+    | _ -> raise (Failure ("not found"))
+=======
     | _ -> raise (Failure ("global init not found"))
+>>>>>>> 7ea627272e678297b9c93e4f48ede715bea61f7e
   in
 
   let global_init_noexpr = function
@@ -87,7 +91,11 @@ let translate (globals, functions) =
         let lll = Array.of_list (List.map global_init_expr l) in
         let typ = L.type_of (Array.get lll 0) in
         L.const_array typ lll
+<<<<<<< HEAD
+      | _ -> raise (Failure ("not found"))
+=======
       | _ -> raise (Failure ("local init not found"))
+>>>>>>> 7ea627272e678297b9c93e4f48ede715bea61f7e
   in
 
   let local_init_noexpr = function
@@ -108,6 +116,28 @@ let translate (globals, functions) =
   let strlen_t = L.function_type float_t [| str_t |] in
   let strlen_func = L.declare_function "strlen" strlen_t the_module in
   
+<<<<<<< HEAD
+  (* let create_t = L.function_type void_p [||] in
+  let create_func = L.declare_function "create" create_t the_module in
+  *)
+  (*
+  let array_add_string_t = L.function_type i32_t [|void_p ; str_t ; str_t|] in
+  let array_add_string_func = L.declare_function "array_add_string" array_add_string_t the_module in
+
+  let array_retrieve_string_t = L.function_type str_t [|void_p ; str_t|] in
+  let array_retrieve_string_func = L.declare_function "array_retrieve_string" array_retrieve_string_t the_module in
+
+  let array_add_float_t = L.function_type i32_t [|void_p ; str_t ; float_t|] in
+  let array_add_float_func = L.declare_function "array_add_float" array_add_float_t the_module in
+
+  let array_retrieve_float_t = L.function_type float_t [|void_p ; str_t|] in
+  let array_retrieve_float_func = L.declare_function "array_retrieve_float" array_retrieve_float_t the_module in
+  *)
+  
+
+  
+=======
+>>>>>>> 7ea627272e678297b9c93e4f48ede715bea61f7e
   let function_decls =
     let function_decl m fdecl =
       let name = fdecl.A.fname
@@ -137,8 +167,11 @@ let translate (globals, functions) =
     and int_format_str = L.build_global_stringptr "%d\n" "fmt" builder
     (* and string_format_str = L.build_global_stringptr "%s\n" "fmt2" builder *) 
     and float_format_str = L.build_global_stringptr "%f\n" "fmt" builder
+<<<<<<< HEAD
+=======
     and true_format_str = L.build_global_stringptr "%s\n true" "fmt" builder
     and false_format_str = L.build_global_stringptr "%s\n false" "fmt" builder
+>>>>>>> 7ea627272e678297b9c93e4f48ede715bea61f7e
     in
 
 
@@ -152,12 +185,23 @@ let translate (globals, functions) =
 	
 	(* Construct code for an expression used for assignment; return its value *)
     let rec lexpr builder g_map l_map = function
+<<<<<<< HEAD
+	  | A.Id s -> L.build_load (lookup s g_map l_map) s builder
+	  | A.Assign (l, r) ->
+        let l', r' = lexpr builder g_map l_map l, expr builder g_map l_map r in
+        ignore (L.build_store r' l' builder); l'
+	  | A.Array_Index (arr, ind) ->
+        let arr' = L.build_load (lookup arr g_map l_map) arr builder in
+        let ind' = expr builder g_map l_map ind in
+        L.build_gep arr' [|L.const_null i32_t; ind'|] "Array_Index" builder
+=======
 	  | A.Id s -> (lookup s g_map l_map)
 	  | A.Array_Index (arr, ind) ->
         (*let arr' = lookup arr g_map l_map in*)
         let arr' = lexpr builder g_map l_map arr in
         let ind' = expr builder g_map l_map ind in
         L.build_in_bounds_gep arr' [|L.const_int i32_t 0; ind'|] "int" builder
+>>>>>>> 7ea627272e678297b9c93e4f48ede715bea61f7e
 	  | _ -> raise (Failure ("not found"))(* Semant should catch other illegal attempts at assignment *)
 		
     (* Construct code for an expression; return its value *)
@@ -218,17 +262,25 @@ let translate (globals, functions) =
                          let e2'  = (expr builder g_map l_map e2) in
 						 ignore (L.build_store e2' l_val builder); e2'
 	  *)
+<<<<<<< HEAD
+	  | A.Assign _ as e -> L.build_load (lexpr builder g_map l_map e) "" builder
+=======
 	  | A.Assign (e1, e2) -> let e1' = lexpr builder g_map l_map e1 in
                              let e2' = expr builder g_map l_map e2 in
                              ignore(L.build_store e2' e1' builder); e1'
+>>>>>>> 7ea627272e678297b9c93e4f48ede715bea61f7e
 	  | A.Array_Lit l ->
 	    let lll = List.map (expr builder g_map l_map) l in
 		let typ = (L.array_type (L.type_of (List.hd lll)) (List.length l)) in
 		let lll = List.map (fun x -> Some x) lll in
 		build_struct_assign (L.undef typ) (Array.of_list lll) builder
 	  | A.Array_Index (arr, ind) ->
+<<<<<<< HEAD
+	    let arr', ind' = L.build_load (lookup arr g_map l_map) arr builder, expr builder g_map l_map ind in
+=======
 	    (*let arr', ind' = L.build_load (lookup arr g_map l_map) arr builder, expr builder g_map l_map ind in*)
         let arr', ind' = expr builder g_map l_map arr, expr builder g_map l_map ind in
+>>>>>>> 7ea627272e678297b9c93e4f48ede715bea61f7e
 		let arr_ptr = L.build_alloca (L.type_of arr') "arr" builder in
 		ignore (L.build_store arr' arr_ptr builder);
 		L.build_load (L.build_gep arr_ptr [|L.const_null i32_t; ind'|] "" builder) "Array_Index" builder

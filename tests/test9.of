@@ -1,0 +1,15 @@
+/* second semantically negative test*/
+/* will be rejected by the following semantic error*/
+/*Fatal error: exception Failure("unrecognized function main")*/
+
+/*postive test*/
+
+int expo (int a, int b)
+{
+    int product = 1;
+    while (b > 0) { 
+        product = product * a;
+		b = b - 1;
+    }
+    return product;
+}

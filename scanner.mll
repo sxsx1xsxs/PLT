@@ -42,8 +42,8 @@ rule token pat = parse
   | "for"   {FOR}
   | "while" {WHILE}
   | "return" {RETURN}
-  | "true"  {TRUE}
-  | "false" {FALSE}
+  | "true"  { BOOL_T(true) }
+  | "false" { BOOL_T(false) }
   | "void"  {VOID}
   | "float" {FLOAT}
   | "bool"  {BOOL}

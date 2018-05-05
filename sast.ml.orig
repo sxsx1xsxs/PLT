@@ -9,9 +9,14 @@ and sx =
 	| SSliteral of string         | SBinop of sexpr * op * sexpr 
 	| SUnop of uop * sexpr         | SAssign of sexpr * sexpr   
 	| SCall of string * sexpr list | SNoexpr
+<<<<<<< HEAD
+    | SArray_Index of sexpr * sexpr
+    | SArray_Lit of sexpr list
+=======
   | SArray_Index of string * expr
   | SArray_Lit of expr list
 
+>>>>>>> 7ea627272e678297b9c93e4f48ede715bea61f7e
 	
 type sstmt = 
 	SBlock of sstmt list | SExpr of sexpr | SReturn of sexpr

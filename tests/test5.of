@@ -1,0 +1,17 @@
+/*postive test*/
+
+int expo (int a, int b)
+{
+    int product = 1;
+    while (b > 0) { 
+        product = product * a;
+		b = b - 1;
+    }
+    return product;
+}
+
+int main (){
+    int c;
+    c = expo(2,1);
+    print(c);
+}

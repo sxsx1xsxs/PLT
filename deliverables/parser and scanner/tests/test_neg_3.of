@@ -1,7 +1,0 @@
-/*negative test*/
-/*No ;*/
-
-int MissingEnd (int a, int b)
-{
-    int a = 1
-}
