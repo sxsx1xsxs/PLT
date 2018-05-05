@@ -9,3 +9,9 @@ int expo (int a, int b)
     }
     return product;
 }
+
+int main (){
+    int c;
+    c = expo(2,1);
+    print(c);
+}

@@ -1,0 +1,19 @@
+int fib(int f){
+    int c;
+    int d;
+    int e;
+    if (f <= 1) {
+        return f;
+    } else {
+        c = fib(f - 1); 
+        d = fib(f - 2);
+        e = c + d;
+        return e;
+    }
+}
+
+int main(){
+    int result;
+    result = fib(5);
+    print(result);
+}
