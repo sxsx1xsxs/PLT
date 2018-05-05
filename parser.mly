@@ -14,7 +14,7 @@ let quote_remover a = String.sub a 1 ((String.length a) - 2);;
 %token RAPPEND LAPPEND LR RL AND OR NOT
 %token REGEX EOF ASSIGN 
 %token RETURN BOOL VOID FLOAT STRING INT
-%token DOT HAT QUST KLEN RPLS ALTR LBRK RBRK LPRT RPRT 
+%token DOT HAT QUST KLEN RPLS ALTR LBRK RBRK LPRT RPRT RANG
 %token <string> ID REGEX_STRING STRING_T
 %token <int> INT_T
 %token <float> FLOAT_T

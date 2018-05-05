@@ -14,7 +14,7 @@ type expr = Literal of int             | BoolLit of bool
           | Call of string * expr list | Noexpr
           | Array_Index of string * expr
           | Array_Lit of expr list
-
+		  | RegexPattern of 
 
 type stmt = Block of stmt list 
           | Expr of expr 
@@ -36,7 +36,7 @@ type func_decl = {
         body    : stmt list;
 }
 
-type pattern = RegexPattern of string
+(* type pattern = RegexPattern of string *)
 
 type program = var_decl list * func_decl list
 
