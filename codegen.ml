@@ -77,7 +77,8 @@ let translate (globals, functions) =
     | A.String -> global_init_expr(A.Sliteral "")
     | A.Void -> L.const_int void_t 0
     | A.Float -> L.const_float float_t 0.0
-    | A.Arr (typ, len)-> global_init_expr(A.Array_Lit [])
+    | A.Arr (typ, len) -> global_init_expr(A.Array_Lit [])
+	| A.Regex -> global_init_expr(A.RegexPattern "")
   in
 
   let local_init_expr = function
@@ -90,6 +91,7 @@ let translate (globals, functions) =
         let lll = Array.of_list (List.map global_init_expr l) in
         let typ = L.type_of (Array.get lll 0) in
         L.const_array typ lll
+	  | A.RegexPattern r -> let l = L.define_global "" (L.const_stringz context r) the_module in L.const_bitcast (L.const_gep l [| L.const_int i32_t 0|]) str_t
       | _ -> raise (Failure ("local init not found"))
   in
 
@@ -100,6 +102,7 @@ let translate (globals, functions) =
       | A.Void -> L.const_int void_t 0
       | A.Float -> L.const_float float_t 0.0
       | A.Arr (typ, len) -> local_init_expr(A.Array_Lit [])
+	  | A.Regex -> global_init_expr(A.RegexPattern "")
   in
 
   let printf_t = L.var_arg_function_type i32_t [| str_t |] in
@@ -110,6 +113,9 @@ let translate (globals, functions) =
   
   let strlen_t = L.function_type float_t [| str_t |] in
   let strlen_func = L.declare_function "strlen" strlen_t the_module in
+  
+  let of_t = L.var_arg_function_type str_t [| str_t; str_t |] in
+  let of_func = L.declare_function "of" of_t the_module in 
 
   let function_decls =
     let function_decl m fdecl =
@@ -170,6 +176,7 @@ let translate (globals, functions) =
       | A.Sliteral s -> build_string s builder
       | A.Noexpr -> L.const_int i32_t 0
       | A.Id s -> L.build_load (lookup s g_map l_map) s builder
+	  | A.RegexPattern r -> build_string r builder
       | A.Binop (e1, op, e2) -> 
 	  (* let (t, _) = e1 *)
 	  let e1' = expr builder g_map l_map e1
@@ -223,8 +230,10 @@ let translate (globals, functions) =
 		let arr_ptr = L.build_alloca (L.type_of arr') "arr" builder in
 		ignore (L.build_store arr' arr_ptr builder);
 		L.build_load (L.build_gep arr_ptr [|L.const_null i32_t; ind'|] "" builder) "Array_Index" builder
-	  
+
+		  
       (*| Call ("prints", [_]) -> L.build_call prints_func [| str_format_str |] "prints" builder*)
+	  | A.Call ("of", [e1, e2]) -> let r = Str.regexp e1 in Str.string_match r e2 0; Str.matched_string e2
       | A.Call ("prints", [e]) -> L.build_call printf_func [| char_format_str; (expr builder g_map l_map e)|] "printf" builder
       | A.Call ("print", [e]) -> L.build_call printf_func [| int_format_str ; (expr builder g_map l_map e) |] "printf" builder
 	  | A.Call ("printb", [e]) -> let e' = expr builder g_map l_map e in

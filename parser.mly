@@ -138,12 +138,12 @@ args_list:
 regex:
       REGEX_STRING { $1 }
 	| DOT {'.'}
-	| LPRT regex_list RPRT {"(" ^ $2 ^ ")"}
+	| LPRT regex_list RPRT {"\(" ^ $2 ^ "\)"}
 	| LBRK regex_set_list LBRK  {"[" ^ $2 ^ "]"}
 	| regex RPLS           { $1 ^ '+' }
 	| regex KLEN           { $1 ^ '*' }
 	| regex QUST		   { $1 ^ '?' }
-	| regex ALTR regex     { $1 ^ '|' ^ $3 }
+	| regex ALTR regex     { $1 ^ '\|' ^ $3 }
 		
 regex_list:
 	  regex                { $1 }
