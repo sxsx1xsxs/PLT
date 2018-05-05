@@ -68,13 +68,29 @@ vdecl_list:
                        { [] }
     | vdecl_list vdecl { $2 :: $1 }
 
+/*
 vdecl:
     typ ID SEMI { VarDecl($1, $2, Noexpr) }
     | typ ID LBK INT_T RBK SEMI {VarDecl(Arr($1, $4), $2, Noexpr)}
     | typ ID LBK INT_T RBK ASSIGN expr SEMI {VarDecl(Arr($1, $4), $2, $7)}
     | typ ID ASSIGN expr SEMI { VarDecl($1, $2, $4) }
+*/
+
+/**/
+array_list:
+    /* nothing */ { [] }
+    | LBRACK LITERAL RBRACK array_list { $2 :: $4 }
+
+bind:
+    | typ ID array_list
+        { List.fold_right (fun l (name, typ) -> (name, Arr(typ, l))) $3 ($2, $1) }
+
+vdecl:
+    | bind SEMI { $1, Noexpr }
+    | bind ASSIGN expr SEMI { $1, $3 }
 
 /* end of decls */
+
 
 /* start of rule_list */
 rule_list:
@@ -130,7 +146,7 @@ expr:
     | NOT expr           { Unop(Not, $2) }
     | expr ASSIGN expr   { Assign($1, $3) }
     | LBK RBK            { Call("create", []) }
-    | ID LBK expr RBK    { Array_Index($1, $3) }
+    | expr LBK expr RBK    { Array_Index($1, $3) }
     | ID LPR args_opt RPR { Call($1, $3) }
     | LPR expr RPR       { $2 }
 
