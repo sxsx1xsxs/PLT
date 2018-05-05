@@ -142,7 +142,7 @@ regex:
 	| regex RPLS           { $1 ^ '+' }
 	| regex KLEN           { $1 ^ '*' }
 	| regex QUST		   { $1 ^ '?' }
-	| regex ALTR regex     { $1 ^ '|' ^ $2 }
+	| regex ALTR regex     { $1 ^ '|' ^ $3 }
 		
 regex_list:
 	  regex                { $1 }
