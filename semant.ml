@@ -59,6 +59,16 @@ let check (globals, functions) =
 
 
 
+  let var_decl_typ_checking e =
+      match e with 
+        Literal  l -> Int
+      | Fliteral l -> Float
+      | BoolLit l  -> Bool
+      | Sliteral s -> String
+      | _ -> Void
+
+    in
+
       (* Check if a certain kind of binding has void type or is a duplicate
      of another, previously checked binding *)
   let check_var_decl (kind : string) (var_list : var_decl list) = 
@@ -68,15 +78,17 @@ let check (globals, functions) =
       in match var_decl with
         (* No void bindings *)
         VarDecl (Void, _, _) -> raise (Failure void_err)
-      | VarDecl (_, n1, _) ->
-(*       | (ty1, n1, e) -> match (expr e) with
-                      | (ty2, _) when ty1 != ty2 -> raise (Failure "type " ^ string_of_typ ty1 ^ " does not match type " ^ string_of_typ ty2 ^" in the variable declaration " ^ string_of_vdecl var_decl)
-                      | _ ->  *)
-
-                      match checked with
-                    (* No duplicate variable_declarations *)
-                            (VarDecl (_, n2, _) :: _) when n1 = n2 -> raise (Failure dup_err)
-                            | _ -> var_decl :: checked
+      | VarDecl (ty1, n1, e) -> 
+                      let ty2 = var_decl_typ_checking e in
+                      let type_err =  "type " ^ string_of_typ ty1 ^ " does not match type " ^ string_of_typ ty2 ^" in the variable declaration " ^ string_of_vdecl var_decl in
+                      let not_supported_type_err = "Variable declaration only supports primitive type initialization" in 
+                      if ty2 == Void then raise (Failure not_supported_type_err)
+                    else if ty1 != ty2 then raise (Failure type_err)
+                      else 
+                        match checked with
+                      (* No duplicate variable_declarations *)
+                              (VarDecl (_, n2, _) :: _) when n1 = n2 -> raise (Failure dup_err)
+                              | _ -> var_decl :: checked
     in let _ = List.fold_left check_it [] (List.sort compare var_list) 
        in var_list
   in 
