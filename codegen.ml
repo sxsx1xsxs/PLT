@@ -107,8 +107,6 @@ let translate (globals, functions) =
   
   let strlen_t = L.function_type float_t [| str_t |] in
   let strlen_func = L.declare_function "strlen" strlen_t the_module in
-  
-  let regex_t = L.function_type str_t 
 
   let function_decls =
     let function_decl m fdecl =

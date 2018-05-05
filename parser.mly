@@ -55,6 +55,7 @@ typ:
     | FLOAT { Float }
     | BOOL { Bool }
     | INT { Int }
+	| REGEXP {Regex}
     /* | ARR { Arr(typ, Int)} */
 
 formal_list:

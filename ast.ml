@@ -5,7 +5,7 @@ type op = Add | Sub | Mult | Div | Equal | Neq | Less | Leq | Greater | Geq | An
 
 type uop = Neg | Not
 
-type typ = Int | Bool | Float | Void | String | Arr of typ * int
+type typ = Int | Bool | Float | Void | String | Arr of typ * int | Regex
 
 type expr = Literal of int             | BoolLit of bool
           | Fliteral of float          | Id of string
@@ -14,7 +14,7 @@ type expr = Literal of int             | BoolLit of bool
           | Call of string * expr list | Noexpr
           | Array_Index of string * expr
           | Array_Lit of expr list
-		  | RegexPattern of 
+		  | RegexPattern of string
 
 type stmt = Block of stmt list 
           | Expr of expr 
@@ -97,6 +97,7 @@ let rec string_of_expr = function
   | Noexpr -> ""
   | Array_Lit l -> "[" ^ String.concat ", " (List.map string_of_expr l) ^ "]"
   | Array_Index (e, ind) -> e ^ "[" ^ string_of_expr ind ^ "]"
+  | RegexPattern(l) -> l
   
 let rec string_of_stmt = function
     Block(stmts) ->
