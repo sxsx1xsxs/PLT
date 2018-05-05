@@ -154,7 +154,8 @@ let translate (globals, functions) =
     let rec lexpr builder g_map l_map = function
 	  | A.Id s -> (lookup s g_map l_map)
 	  | A.Array_Index (arr, ind) ->
-        let arr' = lookup arr g_map l_map in
+        (*let arr' = lookup arr g_map l_map in*)
+        let arr' = lexpr builder g_map l_map arr in
         let ind' = expr builder g_map l_map ind in
         L.build_in_bounds_gep arr' [|L.const_int i32_t 0; ind'|] "int" builder
 	  | _ -> raise (Failure ("not found"))(* Semant should catch other illegal attempts at assignment *)
@@ -226,7 +227,8 @@ let translate (globals, functions) =
 		let lll = List.map (fun x -> Some x) lll in
 		build_struct_assign (L.undef typ) (Array.of_list lll) builder
 	  | A.Array_Index (arr, ind) ->
-	    let arr', ind' = L.build_load (lookup arr g_map l_map) arr builder, expr builder g_map l_map ind in
+	    (*let arr', ind' = L.build_load (lookup arr g_map l_map) arr builder, expr builder g_map l_map ind in*)
+        let arr', ind' = expr builder g_map l_map arr, expr builder g_map l_map ind in
 		let arr_ptr = L.build_alloca (L.type_of arr') "arr" builder in
 		ignore (L.build_store arr' arr_ptr builder);
 		L.build_load (L.build_gep arr_ptr [|L.const_null i32_t; ind'|] "" builder) "Array_Index" builder
