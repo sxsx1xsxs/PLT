@@ -84,11 +84,11 @@ array_list:
 
 bind:
     | typ ID array_list
-        { List.fold_right (fun l (ID, typ) -> (ID, Arr(typ, l))) $3 ($2, $1) }
+        { List.fold_right (fun l (typ, ID) -> (Arr(typ, l), ID)) $3 ($1, $2) }
 
 vdecl:
-    | bind SEMI { VarDecl(snd $1, fst $1, Noexpr) }
-    | bind ASSIGN expr SEMI { VarDecl(snd $1, fst $1, $3) }
+    | bind SEMI { VarDecl(fst $1, snd $1, Noexpr) }
+    | bind ASSIGN expr SEMI { VarDecl(fst $1, snd $1, $3) }
 
 /* end of decls */
 
