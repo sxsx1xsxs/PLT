@@ -49,7 +49,8 @@ rule token pat = parse
   | "bool"  {BOOL}
   | "int"   {INT}
   | "string" {STRING}
-  | '"' [^'"']* '"' as lit { STRING_T(lit) }
+  | "file" {FILE}
+  | '"' [^'"']* '"' as lit { STRING_T(lit); FILE_T(lit) }
   | ['-']?['0' - '9']+['.']['0' - '9']+ as lxm {FLOAT_T(float_of_string lxm)}
   | ['-']?digits as num { INT_T(int_of_string num) }
   | ['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9' '_']* as lxm { ID (lxm) }

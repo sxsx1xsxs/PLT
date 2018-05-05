@@ -5,14 +5,15 @@ type op = Add | Sub | Mult | Div | Equal | Neq | Less | Leq | Greater | Geq | An
 
 type uop = Neg | Not
 
-type typ = Int | Bool | Float | Void | String | Arr of typ * int
+type typ = Int | Bool | Float | Void | String | File | Arr of typ * int
 
 type expr = Literal of int             | BoolLit of bool
           | Fliteral of float          | Id of string
           | Sliteral of string         | Binop of expr * op * expr 
           | Unop of uop * expr         | Assign of expr * expr   
           | Call of string * expr list | Noexpr
-          | Array_Index of string * expr
+          | FileLiteral of string
+          | Array_Index of string * expr 
           | Array_Lit of expr list
 
 
@@ -71,6 +72,7 @@ let rec string_of_typ_ps = function
   | Bool -> "bool", ""
   | Void -> "void", ""
   | Float -> "float", ""
+  | File -> "file", ""
   | Arr(typ, len) ->
     let pref, suf = string_of_typ_ps typ in
     pref, "[" ^ (string_of_int len) ^ "]" ^ suf
@@ -85,6 +87,7 @@ let rec string_of_expr = function
     Literal(l) -> string_of_int l
   | Fliteral(l) -> string_of_float l
   | Sliteral(l) -> l
+  | FileLiteral(l) -> l
   | BoolLit(true) -> "true"
   | BoolLit(false) -> "false"
   | Id(s) -> s

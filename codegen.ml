@@ -51,6 +51,7 @@ let translate (globals, functions) =
     | A.String -> str_t
     | A.Float -> float_t
     | A.Void  -> void_t
+    | A.File -> str_t
     | A.Arr (typ, len) -> L.array_type (ltype_of_typ typ) len
   in
 
@@ -58,6 +59,8 @@ let translate (globals, functions) =
       A.Literal i -> L.const_int i32_t i
     | A.BoolLit b -> L.const_int i1_t (if b then 1 else 0)
     | A.Sliteral s -> let l = L.define_global "" (L.const_stringz context s) the_module in 
+    L.const_bitcast (L.const_gep l [| L.const_int i32_t 0|]) str_t
+    | A.FileLiteral f -> let l = L.define_global "" (L.const_stringz context f) the_module in
     L.const_bitcast (L.const_gep l [| L.const_int i32_t 0|]) str_t
     | A.Fliteral f -> L.const_float float_t f
     | A.Noexpr -> L.const_int i32_t 0
@@ -75,6 +78,7 @@ let translate (globals, functions) =
     | A.Void -> L.const_int void_t 0
     | A.Float -> L.const_float float_t 0.0
     | A.Arr (typ, len)-> global_init_expr(A.Array_Lit [])
+    | A.File -> global_init_expr(A.FileLiteral "")
   in
 
   let local_init_expr = function
@@ -82,6 +86,7 @@ let translate (globals, functions) =
       | A.BoolLit b -> L.const_int i1_t (if b then 1 else 0)
       | A.Sliteral s -> let l = L.define_global "" (L.const_stringz context s) the_module in L.const_bitcast (L.const_gep l [| L.const_int i32_t 0|]) str_t
       | A.Fliteral f -> L.const_float float_t f
+      | A.FileLiteral f -> let l = L.define_global "" (L.const_stringz context f) the_module in L.const_bitcast (L.const_gep l [| L.const_int i32_t 0|]) str_t
       | A.Noexpr -> L.const_int i32_t 0
       | A.Array_Lit l ->
         let lll = Array.of_list (List.map global_init_expr l) in
@@ -97,6 +102,7 @@ let translate (globals, functions) =
       | A.Void -> L.const_int void_t 0
       | A.Float -> L.const_float float_t 0.0
       | A.Arr (typ, len) -> local_init_expr(A.Array_Lit [])
+      | A.File -> global_init_expr(A.FileLiteral "")
   in
 
   let printf_t = L.var_arg_function_type i32_t [| str_t |] in
