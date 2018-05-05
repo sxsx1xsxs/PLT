@@ -77,21 +77,6 @@ vdecl:
 
 /* end of decls */
 
-/* start of rule_list */
-rule_list:
-    {[]}
-    | rule_list rdecl {$2 :: $1}
-
-rdecl:
-    pattern action {$1, $2}
-
-pattern:
-    REGEX single_regex REGEX {RegexPattern($2)}
-
-action:
-    LBC vdecl_list stmt_list RBC {List.rev $2, List.rev $3}
-/* end of rule_list */
-
 stmt_list:
     {[]}
     | stmt_list stmt {$2 :: $1}
@@ -134,6 +119,7 @@ expr:
     | ID LBK expr RBK    { Array_Index($1, $3) }
     | ID LPR args_opt RPR { Call($1, $3) }
     | LPR expr RPR       { $2 }
+	| REGEX regex REGEX  { RegexPattern($2) }
 
 expr_list:
     | expr { [$1] }
@@ -173,5 +159,3 @@ regex_set:
 	| LBRK regex_set_list RBRK {'[' ^ $2 ^ ']'}
 	
 /* end of regex */
-
-/* missing stuff: arrays, actuals, noelse, <string> REGEX_STRING as a token*/
