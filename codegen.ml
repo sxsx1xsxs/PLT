@@ -107,13 +107,17 @@ let translate (globals, functions) =
   
   let strlen_t = L.function_type float_t [| str_t |] in
   let strlen_func = L.declare_function "strlen" strlen_t the_module in
-  
+
+  let openfile_t = L.var_arg_function_type str_t [| str_t; i8_t |] in
+  let openfile_func = L.declare_function "openfile" openfile_t the_module in
+
   (* let create_t = L.function_type void_p [||] in
   let create_func = L.declare_function "create" create_t the_module in
   *)
   (*
   let array_add_string_t = L.function_type i32_t [|void_p ; str_t ; str_t|] in
   let array_add_string_func = L.declare_function "array_add_string" array_add_string_t the_module in
+
 
   let array_retrieve_string_t = L.function_type str_t [|void_p ; str_t|] in
   let array_retrieve_string_func = L.declare_function "array_retrieve_string" array_retrieve_string_t the_module in
@@ -267,6 +271,8 @@ let translate (globals, functions) =
       | A.Call ("printf", [e]) -> 
 	  L.build_call printf_func [| float_format_str ; (expr builder g_map l_map e) |]
 	    "printf" builder
+      | A.Call("openfile",[e1; e2]) ->
+    L.build_call openfile_func [| (expr builder g_map l_map e1); (expr builder g_map l_map e2) |] "openfile" builder
       | A.Call ("strlen", [e]) ->
     L.build_call strlen_func [|expr builder g_map l_map e|] 
     "strlen" builder

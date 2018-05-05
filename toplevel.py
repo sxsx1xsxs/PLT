@@ -14,7 +14,7 @@ if __name__ == "__main__":
     os.system("llc-3.7 test.ir")
 
     print ("generating executable using gcc \n")
-    os.system("gcc -o test test.ir.s")
+    os.system("gcc -o test test.ir.s fopen.o")
 
     print ("executing openFile test program, the following is the output of the program: \n")
     os.system("./test")

@@ -19,18 +19,19 @@ let check (globals, functions) =
 
   (**** Checking Functions ****)
 
-
   (* Collect function declarations for built-in functions: no bodies *)
   let built_in_decls = 
-    let add_bind map (name, ty) = StringMap.add name {
-      ftyp = Void; fname = name; 
-      formals = [VarDecl (ty, "x", Noexpr)];
+    let add_bind map (name, tylist, rtyp) = StringMap.add name {
+      ftyp = rtyp; fname = name; 
+      formals = List.map (fun t -> (VarDecl(t,"x",Noexpr))) tylist;
       locals = []; body = [] } map
-    in List.fold_left add_bind StringMap.empty [ ("print", Int);
-                                     ("prints", String);
-			                         ("printb", Bool);
-			                         ("printf", Float);
-			                         ("printbig", Int) ]
+    in List.fold_left add_bind StringMap.empty [ 
+                                     ("openfile", [String; Int], String);
+                                     ("print", [Int], Void);
+                                     ("prints", [String], Void);
+			                         ("printb", [Bool], Void);
+			                         ("printf", [Float], Void);
+			                         ("printbig", [Int], Void) ]
   in
 
   (* Add function name to symbol table *)
