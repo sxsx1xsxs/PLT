@@ -40,9 +40,7 @@ let translate (globals, functions) =
   and i1_t       = L.i1_type     context
   and float_t    = L.double_type context
   and void_t     = L.void_type   context in
-
-  let void_p     = L.pointer_type i8_t
-  and str_t      = L.pointer_type i8_t in
+  let str_t      = L.pointer_type i8_t in
   (* and arr_t      = L.i64_type context in *)
 
   (* Convert OpenFile types to LLVM types *)
@@ -78,7 +76,7 @@ let translate (globals, functions) =
     | A.String -> global_init_expr(A.Sliteral "")
     | A.Void -> L.const_int void_t 0
     | A.Float -> L.const_float float_t 0.0
-    | A.Arr (typ, len) -> global_init_expr(A.Array_Lit [])
+    | A.Arr (_, _) -> global_init_expr(A.Array_Lit [])
 	| A.Regex -> global_init_expr(A.RegexPattern "")
   in
 
@@ -102,7 +100,7 @@ let translate (globals, functions) =
       | A.String -> global_init_expr(A.Sliteral "")
       | A.Void -> L.const_int void_t 0
       | A.Float -> L.const_float float_t 0.0
-      | A.Arr (typ, len) -> local_init_expr(A.Array_Lit [])
+      | A.Arr (_, _) -> local_init_expr(A.Array_Lit [])
 	  | A.Regex -> global_init_expr(A.RegexPattern "")
   in
 
@@ -150,12 +148,6 @@ let translate (globals, functions) =
     and true_format_str = L.build_global_stringptr "true\n" "fmt" builder
     and false_format_str = L.build_global_stringptr "false\n" "fmt" builder
     in
-	
-	let build_regex r = match r with
-		  A.Sliteral s -> s
-		| A.RegexPattern s -> s
-		| _ -> raise (Failure ("not regex or string"))
-	in
 
     let build_string e builder = 
         let str = L.build_global_stringptr e "str" builder in
@@ -235,7 +227,9 @@ let translate (globals, functions) =
   
       | A.Call ("of", [e1; e2]) -> 
 		  let e1' = expr builder g_map l_map e1 and e2' = expr builder g_map l_map e2 in
-		  let r = regexp (L.string_of_llvalue e1') in string_match r (L.string_of_llvalue e2') 0; build_string (matched_string (L.string_of_llvalue e2')) builder
+		  let r = regexp (L.string_of_llvalue e1') in 
+		  let _ = string_match r (L.string_of_llvalue e2') 0 in 
+		  build_string (matched_string (L.string_of_llvalue e2')) builder
       | A.Call ("prints", [e]) -> L.build_call printf_func [| char_format_str; (expr builder g_map l_map e)|] "printf" builder
       | A.Call ("print", [e]) -> L.build_call printf_func [| int_format_str ; (expr builder g_map l_map e) |] "printf" builder
 	  | A.Call ("printb", [e]) -> let e' = expr builder g_map l_map e in
@@ -260,8 +254,11 @@ let translate (globals, functions) =
 	
     (* Declare each global variable; remember its value in a map *)
     let global_vars = 
-      let global_var m (A.VarDecl(_, n, e)) =
-        let init = global_init_expr e in
+      let global_var m (A.VarDecl(t, n, e)) =
+		let init = match e with
+		    A.Noexpr -> global_init_noexpr t
+		  | _ -> global_init_expr e
+	    in
         StringMap.add n (L.define_global n init the_module) m in
       List.fold_left global_var StringMap.empty globals in
 	
