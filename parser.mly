@@ -79,7 +79,7 @@ vdecl:
 /**/
 array_list:
     /* nothing */ { [] }
-    | LBRACK LITERAL RBRACK array_list { $2 :: $4 }
+    | LBK INT_T RBK array_list { $2 :: $4 }
 
 bind:
     | typ ID array_list
@@ -145,7 +145,7 @@ expr:
     | MINUS       expr   { Unop(Neg, $2) }
     | NOT expr           { Unop(Not, $2) }
     | expr ASSIGN expr   { Assign($1, $3) }
-    | LBK RBK            { Call("create", []) }
+    /*| LBK RBK            { Call("create", []) }*/
     | expr LBK expr RBK    { Array_Index($1, $3) }
     | ID LPR args_opt RPR { Call($1, $3) }
     | LPR expr RPR       { $2 }
