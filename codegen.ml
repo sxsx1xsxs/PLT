@@ -16,6 +16,7 @@ http://llvm.moe/ocaml/
 module L = Llvm
 module A = Ast
 open Str
+open ExtLib
 
 module StringMap = Map.Make(String)
 
@@ -148,6 +149,13 @@ let translate (globals, functions) =
     and true_format_str = L.build_global_stringptr "true\n" "fmt" builder
     and false_format_str = L.build_global_stringptr "false\n" "fmt" builder
     in
+	
+  (*let get_string s = 
+      Option.default "This is bullshit!" s in
+	
+	  let fake_get_string s =
+		  let l = List.map (fun i -> (char_of_int i)) s in
+		  String.concat "" (List.map (String.make 1) l) in *)
 
     let build_string e builder = 
         let str = L.build_global_stringptr e "str" builder in
@@ -225,11 +233,17 @@ let translate (globals, functions) =
 		ignore (L.build_store arr' arr_ptr builder);
 		L.build_load (L.build_gep arr_ptr [|L.const_null i32_t; ind'|] "" builder) "Array_Index" builder
   
-      | A.Call ("of", [e1; e2]) -> 
-		  let e1' = expr builder g_map l_map e1 and e2' = expr builder g_map l_map e2 in
-		  let r = regexp (L.string_of_llvalue e1') in 
-		  let _ = string_match r (L.string_of_llvalue e2') 0 in 
-		  build_string (matched_string (L.string_of_llvalue e2')) builder
+      | A.Call ("of", [e1; e2]) -> expr builder g_map l_map e1
+		  (*let e1' = expr builder g_map l_map e1 and e2' = expr builder g_map l_map e2 in
+		  let s1 = fake_get_string e1' and s2 = fake_get_string e2' in
+		  let r = regexp "." in 
+		  let b = string_match r "a" 0 in 
+		  if b then
+		  	(*build_string (matched_string s2) builder*)
+			build_string s2 builder
+	  	  else 
+			  let _ = print_string s2 in
+			  raise (Failure "Unable to match the pattern")*)
       | A.Call ("prints", [e]) -> L.build_call printf_func [| char_format_str; (expr builder g_map l_map e)|] "printf" builder
       | A.Call ("print", [e]) -> L.build_call printf_func [| int_format_str ; (expr builder g_map l_map e) |] "printf" builder
 	  | A.Call ("printb", [e]) -> let e' = expr builder g_map l_map e in
@@ -258,9 +272,38 @@ let translate (globals, functions) =
 		let init = match e with
 		    A.Noexpr -> global_init_noexpr t
 		  | _ -> global_init_expr e
+		  
 	    in
         StringMap.add n (L.define_global n init the_module) m in
       List.fold_left global_var StringMap.empty globals in
+	  
+	let global_regex = 
+	  let global_reg m (A.VarDecl(t,n,e)) =
+		  if t = A.Regex then
+		  let init = 
+			  match e with
+			  	A.Noexpr -> ""
+			  | A.RegexPattern r -> r
+			  | _ -> raise (Failure "Invalid syntax for regex")
+		  in StringMap.add n init m 
+	  else 
+		  m
+	  in
+	  List.fold_left global_reg StringMap.empty globals in 
+	
+	let local_regex = 
+	  let local_reg m (A.VarDecl(t,n,e)) = 
+		  if t = A.Regex then
+		  let init = 
+			  match e with
+			  	A.Noexpr -> ""
+			  | A.RegexPattern r -> r
+			  | _ -> raise (Failure "Invalid syntax for regex")
+		  in StringMap.add n init m 
+	  else 
+		  m
+	  in
+	  List.fold_left local_reg StringMap.empty fdecl.A.locals in
 	
     (* Construct the function's "locals": formal arguments and locally
        declared variables.  Allocate each on the stack, initialize their

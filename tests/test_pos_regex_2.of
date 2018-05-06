@@ -1,3 +1,5 @@
 int main(){
-    of(@.c.@, "abcde");
+    string s;
+    s = of(@[a-zA-Z]+@, "Hello 42!");
+    prints(s);
 }
