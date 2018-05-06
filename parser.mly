@@ -28,6 +28,7 @@ let quote_remover a = String.sub a 1 ((String.length a) - 2);;
 %left PLUS MINUS
 %left TIMES DIVIDE
 %right NOT
+%left LBK RBK
 
 %start program
 %type <Ast.program> program
@@ -68,13 +69,29 @@ vdecl_list:
                        { [] }
     | vdecl_list vdecl { $2 :: $1 }
 
+/*
 vdecl:
     typ ID SEMI { VarDecl($1, $2, Noexpr) }
     | typ ID LBK INT_T RBK SEMI {VarDecl(Arr($1, $4), $2, Noexpr)}
     | typ ID LBK INT_T RBK ASSIGN expr SEMI {VarDecl(Arr($1, $4), $2, $7)}
     | typ ID ASSIGN expr SEMI { VarDecl($1, $2, $4) }
+*/
+
+/**/
+array_list:
+    /* nothing */ { [] }
+    | LBK INT_T RBK array_list { $2 :: $4 }
+
+bind:
+    | typ ID array_list
+        { List.fold_right (fun a (b, c) -> (Arr(b, a), c)) $3 ($1,$2) }
+
+vdecl:
+    | bind SEMI { VarDecl(fst $1, snd $1, Noexpr) }
+    | bind ASSIGN expr SEMI { VarDecl(fst $1, snd $1, $3) }
 
 /* end of decls */
+
 
 /* start of rule_list */
 rule_list:
@@ -130,8 +147,8 @@ expr:
     | MINUS       expr   { Unop(Neg, $2) }
     | NOT expr           { Unop(Not, $2) }
     | expr ASSIGN expr   { Assign($1, $3) }
-    | LBK RBK            { Call("create", []) }
-    | ID LBK expr RBK    { Array_Index($1, $3) }
+    /*| LBK RBK            { Call("create", []) }*/
+    | expr LBK expr RBK    { Array_Index($1, $3) }
     | ID LPR args_opt RPR { Call($1, $3) }
     | LPR expr RPR       { $2 }
 

@@ -12,8 +12,12 @@ type expr = Literal of int             | BoolLit of bool
           | Sliteral of string         | Binop of expr * op * expr 
           | Unop of uop * expr         | Assign of expr * expr   
           | Call of string * expr list | Noexpr
+<<<<<<< HEAD
           | FileLiteral of string
+          | Array_Index of string * expr 
+=======
           | Array_Index of expr * expr
+>>>>>>> 9e8a01b6f8b0cee2ba2a81a5a87917b19502979b
           | Array_Lit of expr list
 
 

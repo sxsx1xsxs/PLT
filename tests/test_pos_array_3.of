@@ -1,0 +1,5 @@
+
+int main () {
+   string x[2] = ["hello", "world"];
+   prints(x[0]);
+}

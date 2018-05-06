@@ -1,0 +1,7 @@
+int main(){
+    file f = "hello world out.txt";
+    string arg = "this is the result !";
+    string r;
+    r = writefile(f, arg, 19);
+    prints(r);
+}

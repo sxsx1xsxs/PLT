@@ -5,7 +5,7 @@
 # Easiest way to build: using ocamlbuild, which in turn uses ocamlfind
 
 .PHONY : all
-all : openFile.native
+all : openFile.native fopen.o fwrite.o
 
 .PHONY : openFile.native
 openFile.native :
@@ -20,6 +20,7 @@ clean :
 	ocamlbuild -clean
 	rm -rf testall.log *.diff microc scanner.ml parser.ml parser.mli
 	rm -rf *.ir *.ir.s *.cmx *.cmi *.cmo *.cmx *.o *.s *.ll *.out *.exe
+	rm -rf fopen fwrite
 
 # More detailed: build using ocamlc/ocamlopt + ocamlfind to locate LLVM
 
@@ -43,6 +44,12 @@ parser.ml parser.mli : parser.mly
 
 %.cmx : %.ml
 	ocamlfind ocamlopt -c -package llvm $<
+
+fopen: fopen.c
+	cc -o fopen fopen.c
+
+fwrite: fwrite.c
+	cc -o fwrite frwite.c
 
 # Testing the "printbig" example
 

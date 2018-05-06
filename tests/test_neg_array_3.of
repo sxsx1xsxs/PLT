@@ -1,0 +1,4 @@
+
+int main () {
+   int x = [if 0 {prints("a")}];
+}

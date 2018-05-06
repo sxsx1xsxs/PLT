@@ -113,6 +113,32 @@ let translate (globals, functions) =
   
   let strlen_t = L.function_type float_t [| str_t |] in
   let strlen_func = L.declare_function "strlen" strlen_t the_module in
+
+  let openfile_t = L.var_arg_function_type str_t [| str_t; i32_t |] in
+  let openfile_func = L.declare_function "openfile" openfile_t the_module in
+
+  let writefile_t = L.var_arg_function_type str_t [| str_t; str_t; i32_t |] in
+  let writefile_func = L.declare_function "writefile" writefile_t the_module in
+
+  (* let create_t = L.function_type void_p [||] in
+  let create_func = L.declare_function "create" create_t the_module in
+  *)
+  (*
+  let array_add_string_t = L.function_type i32_t [|void_p ; str_t ; str_t|] in
+  let array_add_string_func = L.declare_function "array_add_string" array_add_string_t the_module in
+
+
+  let array_retrieve_string_t = L.function_type str_t [|void_p ; str_t|] in
+  let array_retrieve_string_func = L.declare_function "array_retrieve_string" array_retrieve_string_t the_module in
+
+  let array_add_float_t = L.function_type i32_t [|void_p ; str_t ; float_t|] in
+  let array_add_float_func = L.declare_function "array_add_float" array_add_float_t the_module in
+
+  let array_retrieve_float_t = L.function_type float_t [|void_p ; str_t|] in
+  let array_retrieve_float_func = L.declare_function "array_retrieve_float" array_retrieve_float_t the_module in
+  *)
+  
+
   
   let function_decls =
     let function_decl m fdecl =
@@ -143,8 +169,8 @@ let translate (globals, functions) =
     and int_format_str = L.build_global_stringptr "%d\n" "fmt" builder
     (* and string_format_str = L.build_global_stringptr "%s\n" "fmt2" builder *) 
     and float_format_str = L.build_global_stringptr "%f\n" "fmt" builder
-    and true_format_str = L.build_global_stringptr "%s\n true" "fmt" builder
-    and false_format_str = L.build_global_stringptr "%s\n false" "fmt" builder
+    and true_format_str = L.build_global_stringptr "true\n" "fmt" builder
+    and false_format_str = L.build_global_stringptr "false\n" "fmt" builder
     in
 
 
@@ -160,7 +186,7 @@ let translate (globals, functions) =
     let rec lexpr builder g_map l_map = function
 	  | A.Id s -> (lookup s g_map l_map)
 	  | A.Array_Index (arr, ind) ->
-        let arr', ind' = lookup arr g_map l_map, expr builder g_map l_map ind in
+        let arr', ind' = lexpr builder g_map l_map arr, expr builder g_map l_map ind in
         L.build_in_bounds_gep arr' [|L.const_int i32_t 0; ind'|] "int" builder
 	  | _ -> raise (Failure ("not found"))(* Semant should catch other illegal attempts at assignment *)
 		
@@ -232,8 +258,11 @@ let translate (globals, functions) =
 		let lll = List.map (fun x -> Some x) lll in
 		build_struct_assign (L.undef typ) (Array.of_list lll) len builder
 	  | A.Array_Index (arr, ind) ->
-	    let arr', ind' = lookup arr g_map l_map, expr builder g_map l_map ind in
-		L.build_load (L.build_gep arr' [|L.const_null i32_t; ind'|] "" builder) "Array_Index" builder
+	    (*let arr', ind' = L.build_load (lookup arr g_map l_map) arr builder, expr builder g_map l_map ind in*)
+        let arr', ind' = expr builder g_map l_map arr, expr builder g_map l_map ind in
+		let arr_ptr = L.build_alloca (L.type_of arr') "arr" builder in
+		ignore (L.build_store arr' arr_ptr builder);
+		L.build_load (L.build_gep arr_ptr [|L.const_null i32_t; ind'|] "" builder) "Array_Index" builder
 	  
       (*| Call ("prints", [_]) -> L.build_call prints_func [| str_format_str |] "prints" builder*)
       | A.Call ("prints", [e]) -> L.build_call printf_func [| char_format_str; (expr builder g_map l_map e)|] "printf" builder
@@ -250,6 +279,10 @@ let translate (globals, functions) =
       | A.Call ("printf", [e]) -> 
 	  L.build_call printf_func [| float_format_str ; (expr builder g_map l_map e) |]
 	    "printf" builder
+      | A.Call("openfile",[e1; e2]) ->
+    L.build_call openfile_func [| (expr builder g_map l_map e1); (expr builder g_map l_map e2) |] "openfile" builder
+      | A.Call("writefile",[e1; e2; e3]) ->
+    L.build_call writefile_func [| (expr builder g_map l_map e1); (expr builder g_map l_map e2); (expr builder g_map l_map e3) |] "writefile" builder
       | A.Call ("strlen", [e]) ->
     L.build_call strlen_func [|expr builder g_map l_map e|] 
     "strlen" builder

@@ -1,3 +1,6 @@
 int main(){
-    file f = "/../PLT/test.ml";
+    file f = "hello world.txt";
+    string text;
+    text = openfile(f, 100);
+    prints(text);
 }
