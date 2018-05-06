@@ -21,13 +21,13 @@ open ExtLib
 module StringMap = Map.Make(String)
 
   (* Helper function for assigning struct values. *)
-  let build_struct_assign str values builder =
+  let build_struct_assign str values len builder =
   let assign (llv, ind) value =
     match value with
-    | Some v -> (L.build_insertvalue llv v ind "" builder, ind+1)
-    | None -> (llv, ind+1)
+    | Some v -> (L.build_insertvalue llv v  ind "" builder, (ind-1))
+    | None -> (llv, ind-1)
   in
-  let (ret, _) = Array.fold_left assign (str, 0) values in ret
+  let (ret, _) = Array.fold_left assign (str, len) values in ret
 
 let translate (globals, functions) =
     (* Code Generation from the SAST. Returns an LLVM module if successful,
@@ -51,6 +51,7 @@ let translate (globals, functions) =
     | A.String -> str_t
     | A.Float -> float_t
     | A.Void  -> void_t
+    | A.File -> str_t
     | A.Arr (typ, len) -> L.array_type (ltype_of_typ typ) len
 	| A.Regex -> str_t
   in
@@ -59,6 +60,8 @@ let translate (globals, functions) =
       A.Literal i -> L.const_int i32_t i
     | A.BoolLit b -> L.const_int i1_t (if b then 1 else 0)
     | A.Sliteral s -> let l = L.define_global "" (L.const_stringz context s) the_module in 
+    L.const_bitcast (L.const_gep l [| L.const_int i32_t 0|]) str_t
+    | A.FileLiteral f -> let l = L.define_global "" (L.const_stringz context f) the_module in
     L.const_bitcast (L.const_gep l [| L.const_int i32_t 0|]) str_t
     | A.Fliteral f -> L.const_float float_t f
     | A.Noexpr -> L.const_int i32_t 0
@@ -79,6 +82,7 @@ let translate (globals, functions) =
     | A.Float -> L.const_float float_t 0.0
     | A.Arr (_, _) -> global_init_expr(A.Array_Lit [])
 	| A.Regex -> global_init_expr(A.RegexPattern "")
+    | A.File -> global_init_expr(A.FileLiteral "")
   in
 
   let local_init_expr = function
@@ -86,6 +90,7 @@ let translate (globals, functions) =
       | A.BoolLit b -> L.const_int i1_t (if b then 1 else 0)
       | A.Sliteral s -> let l = L.define_global "" (L.const_stringz context s) the_module in L.const_bitcast (L.const_gep l [| L.const_int i32_t 0|]) str_t
       | A.Fliteral f -> L.const_float float_t f
+      | A.FileLiteral f -> let l = L.define_global "" (L.const_stringz context f) the_module in L.const_bitcast (L.const_gep l [| L.const_int i32_t 0|]) str_t
       | A.Noexpr -> L.const_int i32_t 0
       | A.Array_Lit l ->
         let lll = Array.of_list (List.map global_init_expr l) in
@@ -103,6 +108,7 @@ let translate (globals, functions) =
       | A.Float -> L.const_float float_t 0.0
       | A.Arr (_, _) -> local_init_expr(A.Array_Lit [])
 	  | A.Regex -> global_init_expr(A.RegexPattern "")
+      | A.File -> global_init_expr(A.FileLiteral "")
   in
 
   let printf_t = L.var_arg_function_type i32_t [| str_t |] in
@@ -114,8 +120,12 @@ let translate (globals, functions) =
   let strlen_t = L.function_type float_t [| str_t |] in
   let strlen_func = L.declare_function "strlen" strlen_t the_module in
   
-(* let of_t = L.var_arg_function_type str_t [| str_t; str_t |] in
-  let of_func = L.declare_function "of" of_t the_module in *)
+  let openfile_t = L.var_arg_function_type str_t [| str_t; i32_t |] in
+  let openfile_func = L.declare_function "openfile" openfile_t the_module in
+
+  let writefile_t = L.var_arg_function_type str_t [| str_t; str_t; i32_t |] in
+  let writefile_func = L.declare_function "writefile" writefile_t the_module in
+
 
   let function_decls =
     let function_decl m fdecl =
@@ -166,8 +176,7 @@ let translate (globals, functions) =
     let rec lexpr builder g_map l_map = function
 	  | A.Id s -> (lookup s g_map l_map)
 	  | A.Array_Index (arr, ind) ->
-        let arr' = lookup arr g_map l_map in
-        let ind' = expr builder g_map l_map ind in
+        let arr', ind' = lexpr builder g_map l_map arr, expr builder g_map l_map ind in
         L.build_in_bounds_gep arr' [|L.const_int i32_t 0; ind'|] "int" builder
 	  | _ -> raise (Failure ("not found"))(* Semant should catch other illegal attempts at assignment *)
 		
@@ -224,11 +233,13 @@ let translate (globals, functions) =
                              ignore(L.build_store e2' e1' builder); e1'
 	  | A.Array_Lit l ->
 	    let lll = List.map (expr builder g_map l_map) l in
-		let typ = (L.array_type (L.type_of (List.hd lll)) (List.length l)) in
+        let len = List.length l in
+		let typ = (L.array_type (L.type_of (List.hd lll)) (len)) in
 		let lll = List.map (fun x -> Some x) lll in
-		build_struct_assign (L.undef typ) (Array.of_list lll) builder
+		build_struct_assign (L.undef typ) (Array.of_list lll) len builder
 	  | A.Array_Index (arr, ind) ->
-	    let arr', ind' = L.build_load (lookup arr g_map l_map) arr builder, expr builder g_map l_map ind in
+	    (*let arr', ind' = L.build_load (lookup arr g_map l_map) arr builder, expr builder g_map l_map ind in*)
+        let arr', ind' = expr builder g_map l_map arr, expr builder g_map l_map ind in
 		let arr_ptr = L.build_alloca (L.type_of arr') "arr" builder in
 		ignore (L.build_store arr' arr_ptr builder);
 		L.build_load (L.build_gep arr_ptr [|L.const_null i32_t; ind'|] "" builder) "Array_Index" builder
@@ -245,15 +256,23 @@ let translate (globals, functions) =
 			  let _ = print_string s2 in
 			  raise (Failure "Unable to match the pattern")*)
       | A.Call ("prints", [e]) -> L.build_call printf_func [| char_format_str; (expr builder g_map l_map e)|] "printf" builder
-      | A.Call ("print", [e]) -> L.build_call printf_func [| int_format_str ; (expr builder g_map l_map e) |] "printf" builder
-	  | A.Call ("printb", [e]) -> let e' = expr builder g_map l_map e in
-            let result = L.const_select e' (L.const_null i32_t) (L.const_int i32_t 1) in
-            if L.is_null result then
-                L.build_call printf_func [| true_format_str; |] "printf" builder
-            else
-                L.build_call printf_func [| false_format_str; |] "printf" builder
-      | A.Call ("printbig", [e]) -> L.build_call printbig_func [| (expr builder g_map l_map e) |] "printbig" builder
-      | A.Call ("printf", [e]) -> L.build_call printf_func [| float_format_str ; (expr builder g_map l_map e) |] "printf" builder
+      | A.Call ("print", [e]) -> let e' = expr builder g_map l_map e in
+	                             L.build_call printf_func [| int_format_str ; e' |] "printf" builder
+      | A.Call ("printb", [e]) ->  let e' = expr builder g_map l_map e in
+                                   let result = L.const_select e' (L.const_int i32_t 0) (L.const_int i32_t 1) in
+                                   if L.is_null result then
+                                   L.build_call printf_func [| true_format_str |] "printf" builder
+                                   else
+                                   L.build_call printf_func [| false_format_str |] "printf" builder
+      | A.Call ("printbig", [e]) ->
+	  L.build_call printbig_func [| (expr builder g_map l_map e) |] "printbig" builder
+      | A.Call ("printf", [e]) -> 
+	  L.build_call printf_func [| float_format_str ; (expr builder g_map l_map e) |]
+	    "printf" builder
+      | A.Call("openfile",[e1; e2]) ->
+    L.build_call openfile_func [| (expr builder g_map l_map e1); (expr builder g_map l_map e2) |] "openfile" builder
+      | A.Call("writefile",[e1; e2; e3]) ->
+    L.build_call writefile_func [| (expr builder g_map l_map e1); (expr builder g_map l_map e2); (expr builder g_map l_map e3) |] "writefile" builder
       | A.Call ("strlen", [e]) -> L.build_call strlen_func [|expr builder g_map l_map e|] "strlen" builder
       | A.Call (f, act) ->
         let (fdef, fdecl) = try StringMap.find f function_decls with

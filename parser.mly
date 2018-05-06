@@ -12,10 +12,10 @@ let quote_remover a = String.sub a 1 ((String.length a) - 2);;
 %token TRUE FALSE
 %token PLUS MINUS TIMES DIVIDE MOD EQ NEQ LEQ REQ
 %token RAPPEND LAPPEND LR RL AND OR NOT
-%token REGEX EOF ASSIGN 
-%token RETURN BOOL VOID FLOAT STRING INT REGEXP
 %token DOT HAT QUST KLEN RPLS ALTR LBRK RBRK LPRT RPRT RANG
-%token <string> ID STRING_T REGEX_STRING
+%token FILE REGEX EOF ASSIGN
+%token RETURN BOOL VOID FLOAT STRING INT REGEXP
+%token <string> ID REGEX_STRING STRING_T FILE_T
 %token <int> INT_T
 %token <float> FLOAT_T
 %token <bool> BOOL_T
@@ -30,6 +30,7 @@ let quote_remover a = String.sub a 1 ((String.length a) - 2);;
 %left TIMES DIVIDE
 %right NOT
 %left LPRT RPRT LBRK RBRK ATLR
+%left LBK RBK
 
 %start program
 %type <Ast.program> program
@@ -57,7 +58,7 @@ typ:
     | BOOL { Bool }
     | INT { Int }
 	| REGEXP {Regex}
-    /* | ARR { Arr(typ, Int)} */
+    | FILE { File }
 
 formal_list:
                     { [] }
@@ -71,11 +72,26 @@ vdecl_list:
                        { [] }
     | vdecl_list vdecl { $2 :: $1 }
 
+/*
 vdecl:
     typ ID SEMI { VarDecl($1, $2, Noexpr) }
     | typ ID LBK INT_T RBK SEMI {VarDecl(Arr($1, $4), $2, Noexpr)}
     | typ ID LBK INT_T RBK ASSIGN expr SEMI {VarDecl(Arr($1, $4), $2, $7)}
     | typ ID ASSIGN expr SEMI { VarDecl($1, $2, $4) }
+*/
+
+/**/
+array_list:
+    /* nothing */ { [] }
+    | LBK INT_T RBK array_list { $2 :: $4 }
+
+bind:
+    | typ ID array_list
+        { List.fold_right (fun a (b, c) -> (Arr(b, a), c)) $3 ($1,$2) }
+
+vdecl:
+    | bind SEMI { VarDecl(fst $1, snd $1, Noexpr) }
+    | bind ASSIGN expr SEMI { VarDecl(fst $1, snd $1, $3) }
 
 /* end of decls */
 
@@ -100,6 +116,7 @@ expr:
     | FLOAT_T            { Fliteral($1) }
     | INT_T              { Literal($1)  }
     | BOOL_T             { BoolLit($1)  }
+    | FILE_T             { FileLiteral($1)  }
     | ID                 { Id($1) }
 	| LBK expr_list RBK  { Array_Lit($2) }
     | expr PLUS   expr   { Binop($1, Add,   $3) }
@@ -117,15 +134,15 @@ expr:
     | MINUS       expr   { Unop(Neg, $2) }
     | NOT expr           { Unop(Not, $2) }
     | expr ASSIGN expr   { Assign($1, $3) }
-    | LBK RBK            { Call("create", []) }
-    | ID LBK expr RBK    { Array_Index($1, $3) }
+    /*| LBK RBK            { Call("create", []) }*/
+    | expr LBK expr RBK    { Array_Index($1, $3) }
     | ID LPR args_opt RPR { Call($1, $3) }
     | LPR expr RPR       { $2 }
 	| REGEX regex REGEX  { RegexPattern($2) }
 
 expr_list:
     | expr { [$1] }
-    | expr_list COMMA expr { $3 :: $1 }
+    | expr COMMA expr_list { $1 :: $3 }
 
 args_opt:
     { [] }
@@ -161,3 +178,4 @@ regex_set:
 	| LBRK regex_set_list RBRK {"[" ^ $2 ^ "]"}
 	
 /* end of regex */
+

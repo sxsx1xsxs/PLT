@@ -19,19 +19,29 @@ let check (globals, functions) =
 
   (**** Checking Functions ****)
 
-
   (* Collect function declarations for built-in functions: no bodies *)
   let built_in_decls = 
-    let add_bind map (name, ty) = StringMap.add name {
-      ftyp = Void; fname = name; 
-      formals = [VarDecl (ty, "x", Noexpr)];
+    let add_bind map (name, tylist, rtyp) = StringMap.add name {
+      ftyp = rtyp; fname = name; 
+      formals = List.map (fun t -> (VarDecl(t,"x",Noexpr))) tylist;
       locals = []; body = [] } map
+<<<<<<< HEAD
     in List.fold_left add_bind StringMap.empty [ ("print", Int);
                                 	 ("prints", String);
 									 ("printb", Bool);
                                      ("prints", String);
 			                         ("printf", Float);
 			                         ("printbig", Int) ]
+=======
+    in List.fold_left add_bind StringMap.empty [ 
+                                     ("openfile", [String; Int], String);
+                                     ("writefile", [String; String; Int], String);
+                                     ("print", [Int], Void);
+                                     ("prints", [String], Void);
+			                         ("printb", [Bool], Void);
+			                         ("printf", [Float], Void);
+			                         ("printbig", [Int], Void) ]
+>>>>>>> master
   in
 
   (* Add function name to symbol table *)
@@ -60,6 +70,33 @@ let check (globals, functions) =
 
 
 
+  let rec var_decl_typ_checking e =
+      match e with 
+        Literal  l -> Int
+      | Fliteral l -> Float
+      | BoolLit l  -> Bool
+      | Sliteral s -> String
+      | Noexpr     -> Void
+      | Array_Lit l -> array_lit_check(l)
+      | _ -> raise (Failure "Variable declaration only supports primitive type initialization")
+
+      and
+
+      array_lit_check l = match l with
+      |[]-> raise (Failure "Empty array literals")
+      |[a] -> let a_ty = var_decl_typ_checking a in
+              if a_ty == Void then raise(Failure "Only primitive types are supported in arrays")
+              else Arr(a_ty, 1)
+      |a::b -> let a_ty = var_decl_typ_checking a in
+               let Arr(b_ty, size) = array_lit_check b in
+               if a_ty != b_ty then raise (Failure "Array literals are not in uniformed types")
+               else Arr(a_ty, size+1)
+    in
+
+(*           | Array_Index of string * expr
+          | Array_Lit of expr list
+          | Arr of typ * int *)
+
       (* Check if a certain kind of binding has void type or is a duplicate
      of another, previously checked binding *)
   let check_var_decl (kind : string) (var_list : var_decl list) = 
@@ -69,15 +106,25 @@ let check (globals, functions) =
       in match var_decl with
         (* No void bindings *)
         VarDecl (Void, _, _) -> raise (Failure void_err)
-      | VarDecl (_, n1, _) ->
-(*       | (ty1, n1, e) -> match (expr e) with
-                      | (ty2, _) when ty1 != ty2 -> raise (Failure "type " ^ string_of_typ ty1 ^ " does not match type " ^ string_of_typ ty2 ^" in the variable declaration " ^ string_of_vdecl var_decl)
-                      | _ ->  *)
-
-                      match checked with
-                    (* No duplicate variable_declarations *)
-                            (VarDecl (_, n2, _) :: _) when n1 = n2 -> raise (Failure dup_err)
-                            | _ -> var_decl :: checked
+(*        | VarDecl (_, n1, _) -> *) 
+       | VarDecl (ty1, n1, e) -> 
+          let ty2 = var_decl_typ_checking e in
+            match ty1 with 
+            |Arr (a_ty, size) -> (match ty2 with
+                                  |Arr(b_ty, size2) -> if a_ty != b_ty then raise (Failure "Array literal types not matching array declaration type") else if size != size2 then raise (Failure "Array literal size not matching array declaration size") else
+                                      (match checked with
+                                      (* No duplicate variable_declarations *)
+                                      (VarDecl (_, n2, _) :: _) when n1 = n2 -> raise (Failure dup_err)
+                                      | _ -> var_decl :: checked)
+                                  |_ -> raise (Failure "Array not initalized to the right array literals"))
+            |_->
+                let type_err =  "type " ^ string_of_typ ty1 ^ " does not match type " ^ string_of_typ ty2 ^" in the variable declaration " ^ string_of_vdecl var_decl in
+                if ty1 != ty2 && ty2 != Void then raise (Failure type_err)
+                else
+                  match checked with
+                (* No duplicate variable_declarations *)
+                        (VarDecl (_, n2, _) :: _) when n1 = n2 -> raise (Failure dup_err)
+                        | _ -> var_decl :: checked
     in let _ = List.fold_left check_it [] (List.sort compare var_list) 
        in var_list
   in 
@@ -128,13 +175,18 @@ let check (globals, functions) =
         | _ -> failwith ("expected integer index " ^ string_of_expr ind ^
                          " in " ^ string_of_expr e)
       in
+<<<<<<< HEAD
      (* let elem_type, arr' =
+=======
+
+(*       let elem_type, arr' =
+>>>>>>> master
         match expr arr with
         | Arr (t, _), arr' -> t, arr'
         | _ -> failwith ("expected array " ^ string_of_expr arr ^
                          " in " ^ string_of_expr e)
       in *)
-      Int, SArray_Index (arr, Literal 1)
+      Int, SArray_Index (arr, ind)
       | Array_Lit l ->
       (* Check array size and equality of element types *)
       (* TODO: in LRM say that implicit conversions do (* not apply to array literals *)

@@ -1,0 +1,5 @@
+
+int main () {
+   void x[3];
+   prints(x[0]);
+}

@@ -5,16 +5,17 @@ type op = Add | Sub | Mult | Div | Equal | Neq | Less | Leq | Greater | Geq | An
 
 type uop = Neg | Not
 
-type typ = Int | Bool | Float | Void | String | Arr of typ * int | Regex
+type typ = Int | Bool | Float | Void | String | File | Arr of typ * int | Regex
 
 type expr = Literal of int             | BoolLit of bool
           | Fliteral of float          | Id of string
           | Sliteral of string         | Binop of expr * op * expr 
           | Unop of uop * expr         | Assign of expr * expr   
           | Call of string * expr list | Noexpr
-          | Array_Index of string * expr
+          | FileLiteral of string
+          | Array_Index of expr * expr
           | Array_Lit of expr list
-		  | RegexPattern of string
+          | RegexPattern of string
 
 type stmt = Block of stmt list 
           | Expr of expr 
@@ -56,13 +57,13 @@ let string_of_op = function
 
 let string_of_uop = function
     Neg -> "-"
-  | Not -> "!"
-  
+  | Not -> "!" 
 let rec string_of_typ_ps = function
     Int -> "int", ""
   | Bool -> "bool", ""
   | Void -> "void", ""
   | Float -> "float", ""
+  | File -> "file", ""
   | Arr(typ, len) ->
     let pref, suf = string_of_typ_ps typ in
     pref, "[" ^ (string_of_int len) ^ "]" ^ suf
@@ -78,6 +79,7 @@ let rec string_of_expr = function
     Literal(l) -> string_of_int l
   | Fliteral(l) -> string_of_float l
   | Sliteral(l) -> l
+  | FileLiteral(l) -> l
   | BoolLit(true) -> "true"
   | BoolLit(false) -> "false"
   | Id(s) -> s
@@ -89,8 +91,8 @@ let rec string_of_expr = function
       f ^ "(" ^ String.concat ", " (List.map string_of_expr el) ^ ")"
   | Noexpr -> ""
   | Array_Lit l -> "[" ^ String.concat ", " (List.map string_of_expr l) ^ "]"
-  | Array_Index (e, ind) -> e ^ "[" ^ string_of_expr ind ^ "]"
   | RegexPattern(l) -> l
+  | Array_Index (e, ind) -> string_of_expr e ^ "[" ^ string_of_expr ind ^ "]"
   
 let rec string_of_stmt = function
     Block(stmts) ->
