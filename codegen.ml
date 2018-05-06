@@ -166,32 +166,39 @@ let translate (globals, functions) =
 	  let fake_get_string s =
 		  let l = List.map (fun i -> (char_of_int i)) s in
 		  String.concat "" (List.map (String.make 1) l) in *)
-
+	let get_regex g_reg l_reg = function
+		  A.RegexPattern r -> r
+		| A.Sliteral s -> s
+		| A.Id d -> (lookup d g_reg l_reg)
+		| _ -> raise (Failure "argument not compatible with function of")
+    in
+	
     let build_string e builder = 
         let str = L.build_global_stringptr e "str" builder in
         let null = L.const_int i32_t 0 in
     L.build_in_bounds_gep str [| null |] "str" builder in
 	
 	(* Construct code for an expression used for assignment; return its value *)
-    let rec lexpr builder g_map l_map = function
+    let rec lexpr builder g_map l_map g_reg l_reg = function
 	  | A.Id s -> (lookup s g_map l_map)
 	  | A.Array_Index (arr, ind) ->
-        let arr', ind' = lexpr builder g_map l_map arr, expr builder g_map l_map ind in
+        let arr', ind' = lexpr builder g_map l_map g_reg l_reg arr, expr builder g_map l_map g_reg l_reg ind in
         L.build_in_bounds_gep arr' [|L.const_int i32_t 0; ind'|] "int" builder
 	  | _ -> raise (Failure ("not found"))(* Semant should catch other illegal attempts at assignment *)
 		
     (* Construct code for an expression; return its value *)
-    and expr builder g_map l_map = function
+    and expr builder g_map l_map g_reg l_reg = function
         A.Literal i -> L.const_int i32_t i
       | A.BoolLit b -> L.const_int i1_t (if b then 1 else 0)
       | A.Fliteral l -> L.const_float float_t l
       | A.Sliteral s -> build_string s builder
+	  | A.FileLiteral s -> build_string s builder
       | A.Noexpr -> L.const_int i32_t 0
       | A.Id s -> L.build_load (lookup s g_map l_map) s builder
 	  | A.RegexPattern r -> build_string r builder
       | A.Binop (e1, op, e2) -> 
-	  let e1' = expr builder g_map l_map e1
-	  and e2' = expr builder g_map l_map e2 in
+	  let e1' = expr builder g_map l_map g_reg l_reg e1
+	  and e2' = expr builder g_map l_map g_reg l_reg e2 in
 	  if (L.type_of e1' = float_t || L.type_of e2' = float_t) then
 	  ( match op with 
 	    A.Add     -> L.build_fadd
@@ -224,61 +231,57 @@ let translate (globals, functions) =
         ) e1' e2' "tmp" builder
   
       | A.Unop(op, e) ->
-	  let e' = expr builder g_map l_map e in
+	  let e' = expr builder g_map l_map g_reg l_reg e in
 	  (match op with
 	  | A.Neg                  -> L.build_neg
       | A.Not                  -> L.build_not) e' "tmp" builder
-	  | A.Assign (e1, e2) -> let e1' = lexpr builder g_map l_map e1 in
-                             let e2' = expr builder g_map l_map e2 in
+	  | A.Assign (e1, e2) -> let e1' = lexpr builder g_map l_map g_reg l_reg e1 in
+                             let e2' = expr builder g_map l_map g_reg l_reg e2 in
                              ignore(L.build_store e2' e1' builder); e1'
 	  | A.Array_Lit l ->
-	    let lll = List.map (expr builder g_map l_map) l in
+	    let lll = List.map (expr builder g_map l_map g_reg l_reg) l in
         let len = List.length l in
 		let typ = (L.array_type (L.type_of (List.hd lll)) (len)) in
 		let lll = List.map (fun x -> Some x) lll in
 		build_struct_assign (L.undef typ) (Array.of_list lll) len builder
 	  | A.Array_Index (arr, ind) ->
-	    (*let arr', ind' = L.build_load (lookup arr g_map l_map) arr builder, expr builder g_map l_map ind in*)
-        let arr', ind' = expr builder g_map l_map arr, expr builder g_map l_map ind in
+	    (*let arr', ind' = L.build_load (lookup arr g_map l_map) arr builder, expr builder g_map l_map g_reg l_reg ind in*)
+        let arr', ind' = expr builder g_map l_map g_reg l_reg arr, expr builder g_map l_map g_reg l_reg ind in
 		let arr_ptr = L.build_alloca (L.type_of arr') "arr" builder in
 		ignore (L.build_store arr' arr_ptr builder);
 		L.build_load (L.build_gep arr_ptr [|L.const_null i32_t; ind'|] "" builder) "Array_Index" builder
   
-      | A.Call ("of", [e1; e2]) -> expr builder g_map l_map e1
-		  (*let e1' = expr builder g_map l_map e1 and e2' = expr builder g_map l_map e2 in
-		  let s1 = fake_get_string e1' and s2 = fake_get_string e2' in
-		  let r = regexp "." in 
-		  let b = string_match r "a" 0 in 
+      | A.Call ("of", [e1; e2]) -> let s1 = get_regex g_reg l_reg e1 and s2 = get_regex g_reg l_reg e2 in 
+		  let r = regexp ("\\("^s1^"\\)") in 
+		  let b = string_match r s2 0 in 
 		  if b then
-		  	(*build_string (matched_string s2) builder*)
-			build_string s2 builder
+		  	build_string (matched_string s2) builder
 	  	  else 
-			  let _ = print_string s2 in
-			  raise (Failure "Unable to match the pattern")*)
-      | A.Call ("prints", [e]) -> L.build_call printf_func [| char_format_str; (expr builder g_map l_map e)|] "printf" builder
-      | A.Call ("print", [e]) -> let e' = expr builder g_map l_map e in
+			raise (Failure "Unable to match the pattern")
+      | A.Call ("prints", [e]) -> L.build_call printf_func [| char_format_str; (expr builder g_map l_map g_reg l_reg e)|] "printf" builder
+      | A.Call ("print", [e]) -> let e' = expr builder g_map l_map g_reg l_reg e in
 	                             L.build_call printf_func [| int_format_str ; e' |] "printf" builder
-      | A.Call ("printb", [e]) ->  let e' = expr builder g_map l_map e in
+      | A.Call ("printb", [e]) ->  let e' = expr builder g_map l_map g_reg l_reg e in
                                    let result = L.const_select e' (L.const_int i32_t 0) (L.const_int i32_t 1) in
                                    if L.is_null result then
                                    L.build_call printf_func [| true_format_str |] "printf" builder
                                    else
                                    L.build_call printf_func [| false_format_str |] "printf" builder
       | A.Call ("printbig", [e]) ->
-	  L.build_call printbig_func [| (expr builder g_map l_map e) |] "printbig" builder
+	  L.build_call printbig_func [| (expr builder g_map l_map g_reg l_reg e) |] "printbig" builder
       | A.Call ("printf", [e]) -> 
-	  L.build_call printf_func [| float_format_str ; (expr builder g_map l_map e) |]
+	  L.build_call printf_func [| float_format_str ; (expr builder g_map l_map g_reg l_reg e) |]
 	    "printf" builder
       | A.Call("openfile",[e1; e2]) ->
-    L.build_call openfile_func [| (expr builder g_map l_map e1); (expr builder g_map l_map e2) |] "openfile" builder
+    L.build_call openfile_func [| (expr builder g_map l_map g_reg l_reg e1); (expr builder g_map l_map g_reg l_reg e2) |] "openfile" builder
       | A.Call("writefile",[e1; e2; e3]) ->
-    L.build_call writefile_func [| (expr builder g_map l_map e1); (expr builder g_map l_map e2); (expr builder g_map l_map e3) |] "writefile" builder
-      | A.Call ("strlen", [e]) -> L.build_call strlen_func [|expr builder g_map l_map e|] "strlen" builder
+    L.build_call writefile_func [| (expr builder g_map l_map g_reg l_reg e1); (expr builder g_map l_map g_reg l_reg e2); (expr builder g_map l_map g_reg l_reg e3) |] "writefile" builder
+      | A.Call ("strlen", [e]) -> L.build_call strlen_func [|expr builder g_map l_map g_reg l_reg e|] "strlen" builder
       | A.Call (f, act) ->
         let (fdef, fdecl) = try StringMap.find f function_decls with
                             Not_found -> raise (Failure "Founction not declared")
 		in
-	 		let actuals = List.rev (List.map (expr builder g_map l_map) (List.rev act)) in
+	 		let actuals = List.rev (List.map (expr builder g_map l_map g_reg l_reg) (List.rev act)) in
 	 	   	let result = (match fdecl.A.ftyp with 
                           A.Void -> ""
                         | _ -> f ^ "_result") in
@@ -298,10 +301,11 @@ let translate (globals, functions) =
 	  
 	let global_regex = 
 	  let global_reg m (A.VarDecl(t,n,e)) =
-		  if t = A.Regex then
+		  if t = A.Regex || t = A.String then
 		  let init = 
 			  match e with
 			  	A.Noexpr -> ""
+			  | A.Sliteral s -> s
 			  | A.RegexPattern r -> r
 			  | _ -> raise (Failure "Invalid syntax for regex")
 		  in StringMap.add n init m 
@@ -312,11 +316,12 @@ let translate (globals, functions) =
 	
 	let local_regex = 
 	  let local_reg m (A.VarDecl(t,n,e)) = 
-		  if t = A.Regex then
+		  if t = A.Regex || t = A.String then
 		  let init = 
 			  match e with
 			  	A.Noexpr -> ""
 			  | A.RegexPattern r -> r
+			  | A.Sliteral s -> s
 			  | _ -> raise (Failure "Invalid syntax for regex")
 		  in StringMap.add n init m 
 	  else 
@@ -372,19 +377,19 @@ let translate (globals, functions) =
     let rec stmt builder = function
 	    A.Block sl -> List.fold_left stmt builder sl
         (* Generate code for this expression, return resulting builder *)
-      | A.Expr e -> let _ = expr builder global_vars local_vars e in builder 
+      | A.Expr e -> let _ = expr builder global_vars local_vars global_regex local_regex e in builder 
       | A.Return e -> ignore (match fdecl.A.ftyp with
                               (* Special "return nothing" instr *)
                               A.Void -> L.build_ret_void builder 
                               (* Build return statement *)
-                            | _ -> L.build_ret (expr builder global_vars local_vars e) builder); builder
+                            | _ -> L.build_ret (expr builder global_vars local_vars global_regex local_regex e) builder); builder
       (* The order that we create and add the basic blocks for an If statement
       doesnt 'really' matter (seemingly). What hooks them up in the right order
       are the build_br functions used at the end of the then and else blocks (if
       they don't already have a terminator) and the build_cond_br function at
       the end, which adds jump instructions to the "then" and "else" basic blocks *)
       | A.If (predicate, then_stmt, else_stmt) ->
-         let bool_val = expr builder global_vars local_vars predicate in
+         let bool_val = expr builder global_vars local_vars global_regex local_regex predicate in
          (* Add "merge" basic block to our function's list of blocks *)
 	 let merge_bb = L.append_block context "merge" the_function in
          (* Partial function used to generate branch to merge block *) 
@@ -426,7 +431,7 @@ let translate (globals, functions) =
 
           (* Generate the predicate code in the predicate block *)
 	  let pred_builder = L.builder_at_end context pred_bb in
-	  let bool_val = expr pred_builder global_vars local_vars predicate in
+	  let bool_val = expr pred_builder global_vars local_vars global_regex local_regex predicate in
 
           (* Hook everything up *)
 	  let merge_bb = L.append_block context "merge" the_function in
