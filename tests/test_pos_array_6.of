@@ -1,0 +1,6 @@
+
+int main () {
+	bool x[2] = [0,1];
+	x[1] = 0
+	printb(x[1]);
+}
