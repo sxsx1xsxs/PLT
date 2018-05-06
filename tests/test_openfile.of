@@ -1,5 +1,7 @@
 int main () {
   string text;
+  prints("start openfile methods");
   text = openfile("hello world.txt", 100);
   prints(text);
+  prints("ending openfile methods");
 }
