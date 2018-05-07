@@ -65,7 +65,8 @@ rule token pat = parse
   
   and regex pat = parse
   | '@' { pat := NORMAL ; REGEX }
-  | ['\\']['"' '.' '?' '|' '^' '+' '[' ']' '(' ')' '\\' '*' '@'] as lit { REGEX_STRING(lit) }
+  | ['\\']['"' '.' '?' '$' '|' '^' '+' '[' ']' '(' ')' '\\' '*' '@'] as lit { REGEX_STRING(lit) }
+  | '$' { DOLL }
   | '.' { DOT  }
   | '^' { HAT  }
   | '?' { QUST }
@@ -77,7 +78,7 @@ rule token pat = parse
   | ']' { RBRK }
   | '(' { LPRT }
   | ')' { RPRT }
-  | [^'"' '.' '@' '|' '^' '?' '+' '[' ']' '(' ')' '\\' '*'] as lit {REGEX_STRING((Char.escaped lit))}
+  | [^'"' '.' '@' '$' '|' '^' '?' '+' '[' ']' '(' ')' '\\' '*'] as lit {REGEX_STRING((Char.escaped lit))}
   | _ as error {raise (Failure("illegal regex " ^ Char.escaped error))}
 
   {
