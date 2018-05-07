@@ -7,3 +7,11 @@ int mod (int a, int b)
     }
     return a;
 }
+
+int main() {
+	int a = 10;
+	int b = 10;
+	int c;
+	c = mod(a,b);
+	print(c);
+}

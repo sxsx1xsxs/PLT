@@ -1,7 +1,0 @@
-/* first semantically negative test*/
-/* will be rejected by the following semantic error*/
-/*Fatal error: exception Failure("unrecognized function printp")*/
-
-int main() {
-printp("Hello World");
-}

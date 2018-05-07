@@ -9,4 +9,11 @@ int max (int a, int b)
     	return b;
     }
 }
+int main() {
+	int a = 10;
+	int b =0;
+	int c;
+	c = max(a, b);
+	print(c);
+}
 

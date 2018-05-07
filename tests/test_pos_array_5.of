@@ -1,6 +1,0 @@
-
-int main () {
-	bool x[2] = [0,1];
-	printb(x[0]);
-	printb(x[1]);
-}
