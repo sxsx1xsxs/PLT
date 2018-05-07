@@ -12,7 +12,7 @@ let quote_remover a = String.sub a 1 ((String.length a) - 2);;
 %token TRUE FALSE
 %token PLUS MINUS TIMES DIVIDE MOD EQ NEQ LEQ REQ
 %token RAPPEND LAPPEND LR RL AND OR NOT
-%token DOT HAT QUST KLEN RPLS ALTR LBRK RBRK LPRT RPRT RANG
+%token DOT HAT QUST KLEN RPLS ALTR LBRK RBRK LPRT RPRT RANG DOLL
 %token FILE REGEX EOF ASSIGN
 %token RETURN BOOL VOID FLOAT STRING INT REGEXP
 %token <string> ID REGEX_STRING STRING_T FILE_T
@@ -157,6 +157,7 @@ regex:
       REGEX_STRING { $1 }
 	| DOT {"."}
 	| HAT {"^"}
+	| DOLL {"$"}
 	| LPRT regex_list RPRT {"\\(" ^ $2 ^ "\\)"}
 	| LBRK regex_set_list RBRK  {"[" ^ $2 ^ "]"}
 	| regex RPLS           { $1 ^ "+" }
@@ -174,6 +175,7 @@ regex_set_list:
 
 regex_set:
 	  REGEX_STRING {$1}
+	| HAT {"^"}
 	| REGEX_STRING RANG REGEX_STRING {$1^"-"^$3}
 	| LBRK regex_set_list RBRK {"["^$2^"]"}
 	
