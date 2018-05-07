@@ -10,7 +10,7 @@ all : openFile.native fopen.o fwrite.o
 .PHONY : openFile.native
 openFile.native :
 	rm -f *.o
-	ocamlbuild -use-ocamlfind -pkgs llvm,llvm.analysis,str,extlib -cflags -w,+a-4 \
+	ocamlbuild -use-ocamlfind -pkgs llvm,llvm.analysis,str -cflags -w,+a-4 \
 		openFile.native
 
 # "make clean" removes all generated files
@@ -37,19 +37,19 @@ parser.ml parser.mli : parser.mly
 	ocamlyacc parser.mly
 
 %.cmo : %.mls
-	ocamlc -c str.cma extLib.cma $<
+	ocamlc -c str.cma $<
 
 %.cmi : %.mli
 	ocamlc -c $<
 
 %.cmx : %.ml
-	ocamlfind ocamlopt -c -package llvm -package str -package extlib $<
+	ocamlfind ocamlopt -c -package llvm -package str $<
 
 fopen: fopen.c
 	cc -o fopen fopen.c
 
 fwrite: fwrite.c
-	cc -o fwrite frwite.c
+	cc -o fwrite fwrite.c
 
 # Testing the "printbig" example
 

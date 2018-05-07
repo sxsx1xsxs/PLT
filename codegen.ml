@@ -16,7 +16,6 @@ http://llvm.moe/ocaml/
 module L = Llvm
 module A = Ast
 open Str
-open ExtLib
 
 module StringMap = Map.Make(String)
 
@@ -159,11 +158,6 @@ let translate (globals, functions) =
     and true_format_str = L.build_global_stringptr "true\n" "fmt" builder
     and false_format_str = L.build_global_stringptr "false\n" "fmt" builder
     in
-	
-  (*let get_string s = 
-      Option.default "This is bullshit!" s in
-	
-	  *)
 	  
 	let string_to_char_list s =
 	    let rec exp i l =
