@@ -163,12 +163,24 @@ let translate (globals, functions) =
   (*let get_string s = 
       Option.default "This is bullshit!" s in
 	
-	  let fake_get_string s =
-		  let l = List.map (fun i -> (char_of_int i)) s in
-		  String.concat "" (List.map (String.make 1) l) in *)
+	  *)
+	  
+	let string_to_char_list s =
+	    let rec exp i l =
+	      if i < 0 then l else exp (i - 1) (s.[i] :: l) in
+	    exp (String.length s - 1) [] in
+		
+    let despace_string s =
+		let l = string_to_char_list s in
+		let r = List.map (fun i -> 
+			match i with
+			| ' ' -> '\n'
+			| _ -> i 
+		) l in String.concat "" (List.map (String.make 1) r) in
+		  
 	let get_regex g_reg l_reg = function
 		  A.RegexPattern r -> r
-		| A.Sliteral s -> s
+		| A.Sliteral s -> despace_string s
 		| A.Id d -> (lookup d g_reg l_reg)
 		| _ -> raise (Failure "argument not compatible with function of")
     in
@@ -252,12 +264,12 @@ let translate (globals, functions) =
 		L.build_load (L.build_gep arr_ptr [|L.const_null i32_t; ind'|] "" builder) "Array_Index" builder
   
       | A.Call ("of", [e1; e2]) -> let s1 = get_regex g_reg l_reg e1 and s2 = get_regex g_reg l_reg e2 in 
-		  let r = regexp ("\\("^s1^"\\)") in 
-		  let b = string_match r s2 0 in 
-		  if b then
-		  	build_string (matched_string s2) builder
-	  	  else 
-			raise (Failure "Unable to match the pattern")
+		  let r = regexp s1 in 
+		  let i = try search_forward r s2 0 with
+		  	Not_found -> -1 in
+		  if i = -1 then 
+			  build_string ("Unable to match the pattern: "^s2) builder 
+	  	  else build_string (matched_string s2) builder
       | A.Call ("prints", [e]) -> L.build_call printf_func [| char_format_str; (expr builder g_map l_map g_reg l_reg e)|] "printf" builder
       | A.Call ("print", [e]) -> let e' = expr builder g_map l_map g_reg l_reg e in
 	                             L.build_call printf_func [| int_format_str ; e' |] "printf" builder
@@ -305,7 +317,7 @@ let translate (globals, functions) =
 		  let init = 
 			  match e with
 			  	A.Noexpr -> ""
-			  | A.Sliteral s -> s
+			  | A.Sliteral s -> despace_string s
 			  | A.RegexPattern r -> r
 			  | _ -> raise (Failure "Invalid syntax for regex")
 		  in StringMap.add n init m 
@@ -321,7 +333,7 @@ let translate (globals, functions) =
 			  match e with
 			  	A.Noexpr -> ""
 			  | A.RegexPattern r -> r
-			  | A.Sliteral s -> s
+			  | A.Sliteral s -> despace_string s
 			  | _ -> raise (Failure "Invalid syntax for regex")
 		  in StringMap.add n init m 
 	  else 

@@ -62,10 +62,10 @@ rule token pat = parse
   and comment pat = parse
     "*/" { token pat lexbuf }
   | _    { comment pat lexbuf }
-
+  
   and regex pat = parse
   | '@' { pat := NORMAL ; REGEX }
-  | '\\'['"' '.' '?' '|' '^' '+' '[' ']' '(' ')' '\\' '*'] as lit { REGEX_STRING(lit) }
+  | ['\\']['"' '.' '?' '|' '^' '+' '[' ']' '(' ')' '\\' '*' '@'] as lit { REGEX_STRING(lit) }
   | '.' { DOT  }
   | '^' { HAT  }
   | '?' { QUST }

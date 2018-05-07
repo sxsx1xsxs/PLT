@@ -1,0 +1,5 @@
+int main(){
+    regex r = @(^[a-z]+\@[a-z]+\.com)@;
+    string s = "test openfile@gmail.com";
+    prints(of(r, s));
+}
