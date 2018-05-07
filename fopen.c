@@ -1,13 +1,15 @@
 #include<stdio.h>
+#include<stdlib.h>
 
-char *myFile( char * str, int length) {
-	char text[length];
-	FILE *fp = fopen(str, "r");
+ char *openfile( char * str, int length) {
+	char *text = malloc(length * sizeof(char));
+	FILE *fp=fopen(str, "r");
 	int i=0;
-	while(feof(fp)){
+	while(!feof(fp)) {
      text[i++] = fgetc(fp);
-	}
+ 	}
 	text[i]='\0';
+	fclose(fp);
 	return text;
 }
 

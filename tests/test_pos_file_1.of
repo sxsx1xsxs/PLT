@@ -1,0 +1,6 @@
+int main(){
+    file f = "hello world.txt";
+    string text;
+    text = openfile(f, 100);
+    prints(text);
+}

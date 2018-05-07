@@ -12,9 +12,9 @@ let quote_remover a = String.sub a 1 ((String.length a) - 2);;
 %token TRUE FALSE
 %token PLUS MINUS TIMES DIVIDE MOD EQ NEQ LEQ REQ
 %token RAPPEND LAPPEND LR RL AND OR NOT
-%token REGEX EOF ASSIGN 
+%token FILE REGEX EOF ASSIGN
 %token RETURN BOOL VOID FLOAT STRING INT
-%token <string> ID REGEX_STRING STRING_T
+%token <string> ID REGEX_STRING STRING_T FILE_T
 %token <int> INT_T
 %token <float> FLOAT_T
 %token <bool> BOOL_T
@@ -55,7 +55,7 @@ typ:
     | FLOAT { Float }
     | BOOL { Bool }
     | INT { Int }
-    /* | ARR { Arr(typ, Int)} */
+    | FILE { File }
 
 formal_list:
                     { [] }
@@ -129,6 +129,7 @@ expr:
     | FLOAT_T            { Fliteral($1) }
     | INT_T              { Literal($1)  }
     | BOOL_T             { BoolLit($1)  }
+    | FILE_T             { FileLiteral($1)  }
     | ID                 { Id($1) }
 	| LBK expr_list RBK  { Array_Lit($2) }
     | expr PLUS   expr   { Binop($1, Add,   $3) }
@@ -167,4 +168,4 @@ single_regex:
     REGEX_STRING { $1 }
 /* end of regex */
 
-/* missing stuff: arrays, actuals, noelse, <string> REGEX_STRING as a token*/
+

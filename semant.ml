@@ -27,6 +27,7 @@ let check (globals, functions) =
       locals = []; body = [] } map
     in List.fold_left add_bind StringMap.empty [ 
                                      ("openfile", [String; Int], String);
+                                     ("writefile", [String; String; Int], String);
                                      ("print", [Int], Void);
                                      ("prints", [String], Void);
 			                         ("printb", [Bool], Void);
