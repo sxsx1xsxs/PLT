@@ -9,7 +9,7 @@ and sx =
 	| SSliteral of string         | SBinop of sexpr * op * sexpr 
 	| SUnop of uop * sexpr         | SAssign of sexpr * sexpr   
 	| SCall of string * sexpr list | SNoexpr
-  | SArray_Index of string * expr
+  | SArray_Index of expr * expr
   | SArray_Lit of expr list
 
 	
