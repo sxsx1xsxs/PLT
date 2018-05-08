@@ -167,8 +167,21 @@ let get_array_index_type array_expr map =
   get_actual_type ty layer 
 in
 
+
+ let rec get_array_literal_type l = 
+   match l with 
+   |[] -> raise (Failure "array literals cannot be empty")
+   |[a] -> let ty, _ = expr a in Arr (ty,1)
+   |a::b -> let ty1, _ = expr a in 
+            let Arr(ty2, n) = get_array_literal_type b in
+            if not (ty2 = ty1) then raise (Failure "The array literal is not in uniformed types")
+          else Arr (ty1, n + 1) 
+
+ and 
+ 
+
 (* Return a semantically-checked expression, i.e., with a type *)
-    let rec expr e = match e with
+        expr e = match e with
         Literal  l -> (Int, SLiteral l)
       | Fliteral l -> (Float, SFliteral l)
       | BoolLit l  -> (Bool, SBoolLit l)
@@ -183,22 +196,8 @@ in
                          " in " ^ string_of_expr e)
       in
       (get_array_index_type arr lmap), SArray_Index (arr, ind)
-      | Array_Lit l -> raise (Failure "array literals cannot be reassigned and they can only be initialized or modified by individual element")
-      (* Check array size and equality of element types *)
-      (* TODO: in LRM say that implicit conversions do (* not apply to array literals *)
-      (match l with
-       | [] -> failwith ("illegal empty array " ^ string_of_expr e)
-       | hd :: tl ->
-         let (lt, hd') = expr hd in
-         let tl' = List.map (fun l ->
-             let t, e' = expr l in
-             let _, e'' = check_assign_strict lt e' t
-                 ("array literal " ^ string_of_expr e ^
-                  " contains elements of unequal types "
-                  ^ string_of_typ lt ^ " and " ^ string_of_typ t)
-             in e'') tl
-         in *)
-(*          Arr (Int, 0), SArray_Lit([]) *)
+(*       | Array_Lit l -> raise (Failure "array literals cannot be reassigned and they can only be initialized or modified by individual element") *)
+      | Array_Lit l -> get_array_literal_type l, SArray_Lit([])
       | Assign(var, e) as ex -> 
           let (lt, _) = expr var
           and (rt, e') = expr e in
