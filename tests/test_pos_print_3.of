@@ -1,3 +1,7 @@
+/*expected output:
+3.141593
+*/
+
 int main(){
     printf(3.1415926);
 }

@@ -1,3 +1,5 @@
+/* parse error*/
+
 int main(){
     string s = "failure "testing";
 }

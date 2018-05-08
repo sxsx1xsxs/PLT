@@ -1,3 +1,7 @@
+/*expected output:
+test escaping \", test passes
+*/
+
 int main(){
     string s = "test escaping \", test passes";
     prints(s);

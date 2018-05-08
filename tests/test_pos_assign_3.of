@@ -1,3 +1,7 @@
+/*expected output:
+Hello World!
+*/
+
 int main(){
     string s = "Hello World!";
     prints(s);

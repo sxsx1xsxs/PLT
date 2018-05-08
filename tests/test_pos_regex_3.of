@@ -1,3 +1,7 @@
+/*expected output:
+openfile@gmail.com
+*/
+
 int main(){
     regex r = @(^[a-z]+\@[a-z]+\.com)@;
     string s = "test openfile@gmail.com";

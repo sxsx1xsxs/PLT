@@ -1,3 +1,7 @@
+/*expected output:
+this is the result !
+*/
+
 int main(){
     file f = "hello world out.txt";
     string arg = "this is the result !";

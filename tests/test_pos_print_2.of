@@ -1,3 +1,7 @@
+/*expected output:
+Hello World!
+*/
+
 int main(){
     prints("Hello World!");
 }

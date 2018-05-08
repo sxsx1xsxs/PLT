@@ -1,3 +1,7 @@
+/*expected output:
+test@gmail.com
+*/
+
 int main(){
     string s = "test@gmail.com";
     prints(s);

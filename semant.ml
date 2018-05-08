@@ -31,7 +31,6 @@ let check (globals, functions) =
                                      ("writefile", [String; String; Int], String);
                                      ("print", [Int], Void);
                                      ("prints", [String], Void);
-                                     ("prints", [Regex], Void);
 			                         ("printb", [Bool], Void);
 			                         ("printf", [Float], Void);
 			                         ("printbig", [Int], Void) ]
@@ -61,7 +60,8 @@ let check (globals, functions) =
 
   let _ = find_func "main" in (* Ensure "main" is defined *)
 
-
+  let type_equal x y = if (x = File || x = String || x = Regex ) && (y = File || y = String || y = Regex ) then true
+      else x = y in 
 
   let rec var_decl_typ_checking e =
       match e with 
@@ -110,7 +110,7 @@ let check (globals, functions) =
                                   |_ -> raise (Failure "Array not initalized to the right array literals"))
             |_->
                 let type_err =  "type " ^ string_of_typ ty1 ^ " does not match type " ^ string_of_typ ty2 ^" in the variable declaration " ^ string_of_vdecl var_decl in
-                if ty1 != ty2 && ty2 != Void then raise (Failure type_err)
+                if not (type_equal ty1 ty2) && ty2 != Void then raise (Failure type_err)
                 else
                   match checked with
                 (* No duplicate variable_declarations *)
@@ -134,8 +134,7 @@ let check (globals, functions) =
        the given lvalue type *)
     let check_assign lvaluet rvaluet err =
        if lvaluet = rvaluet then lvaluet 
-     else if lvaluet = String && rvaluet = Regex then lvaluet
-     else if lvaluet = Regex && rvaluet = String then rvaluet
+     else if (lvaluet = String || lvaluet = Regex || lvaluet = File) && (rvaluet = String || rvaluet = Regex || rvaluet = File) then lvaluet
      else raise (Failure err)
     in   
 
@@ -247,8 +246,8 @@ in
           else let check_call x e = match x with
           |VarDecl(ft, _, _) ->
             let (et, e') = expr e in 
-            let err = "illegal argument found " ^ string_of_typ et ^
-              " expected " ^ string_of_typ ft ^ " in " ^ string_of_expr e
+            let err = "illegal argument " ^ string_of_typ et ^
+              " found but " ^ string_of_typ ft ^ " is expected in " ^ string_of_expr e
             in (check_assign ft et err, e')
           in 
           let args' = List.map2 check_call fd.formals args

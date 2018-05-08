@@ -1,3 +1,7 @@
+/*expected output:
+5
+*/
+
 int fib(int f){
     int c;
     int d;

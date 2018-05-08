@@ -1,3 +1,4 @@
+/* semant error message: illegal argument int found but bool is expected in x[0]*/
 
 int main () {
    int x = 5;

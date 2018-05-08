@@ -1,3 +1,9 @@
+/*expected output:
+true
+false
+*/
+
+
 int main(){
     printb(true);
     printb(false);
