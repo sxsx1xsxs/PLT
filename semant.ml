@@ -26,10 +26,12 @@ let check (globals, functions) =
       formals = List.map (fun t -> (VarDecl(t,"x",Noexpr))) tylist;
       locals = []; body = [] } map
     in List.fold_left add_bind StringMap.empty [ 
+                                     ("of", [Regex; String], String);
                                      ("openfile", [String; Int], String);
                                      ("writefile", [String; String; Int], String);
                                      ("print", [Int], Void);
                                      ("prints", [String], Void);
+                                     ("prints", [Regex], Void);
 			                         ("printb", [Bool], Void);
 			                         ("printf", [Float], Void);
 			                         ("printbig", [Int], Void) ]
@@ -69,6 +71,7 @@ let check (globals, functions) =
       | Sliteral s -> String
       | Noexpr     -> Void
       | Array_Lit l -> array_lit_check(l)
+      | RegexPattern s -> Regex
       | _ -> raise (Failure "Variable declaration only supports primitive type initialization")
 
       and
@@ -130,7 +133,10 @@ let check (globals, functions) =
     (* Raise an exception if the given rvalue type cannot be assigned to
        the given lvalue type *)
     let check_assign lvaluet rvaluet err =
-       if lvaluet = rvaluet then lvaluet else raise (Failure err)
+       if lvaluet = rvaluet then lvaluet 
+     else if lvaluet = String && rvaluet = Regex then lvaluet
+     else if lvaluet = Regex && rvaluet = String then rvaluet
+     else raise (Failure err)
     in   
 
     
@@ -182,7 +188,8 @@ in
 
 (* Return a semantically-checked expression, i.e., with a type *)
         expr e = match e with
-        Literal  l -> (Int, SLiteral l)
+      | RegexPattern s -> (Regex, SRegexPattern s)
+      | Literal  l -> (Int, SLiteral l)
       | Fliteral l -> (Float, SFliteral l)
       | BoolLit l  -> (Bool, SBoolLit l)
       | Noexpr     -> (Void, SNoexpr)
