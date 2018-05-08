@@ -167,6 +167,13 @@ let get_array_index_type array_expr map =
   get_actual_type ty layer 
 in
 
+(* 
+let rec get_array_literal_type l = 
+  match l with 
+  |[] -> raise (Failure "array literals cannot be empty")
+  |[a] -> let ty, _ = expr a in 
+in *)
+
 (* Return a semantically-checked expression, i.e., with a type *)
     let rec expr e = match e with
         Literal  l -> (Int, SLiteral l)
