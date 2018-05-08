@@ -25,14 +25,6 @@ let check (globals, functions) =
       ftyp = rtyp; fname = name; 
       formals = List.map (fun t -> (VarDecl(t,"x",Noexpr))) tylist;
       locals = []; body = [] } map
-<<<<<<< HEAD
-    in List.fold_left add_bind StringMap.empty [ ("print", Int);
-                                	 ("prints", String);
-									 ("printb", Bool);
-                                     ("prints", String);
-			                         ("printf", Float);
-			                         ("printbig", Int) ]
-=======
     in List.fold_left add_bind StringMap.empty [ 
                                      ("openfile", [String; Int], String);
                                      ("writefile", [String; String; Int], String);
@@ -41,7 +33,6 @@ let check (globals, functions) =
 			                         ("printb", [Bool], Void);
 			                         ("printf", [Float], Void);
 			                         ("printbig", [Int], Void) ]
->>>>>>> master
   in
 
   (* Add function name to symbol table *)
@@ -89,18 +80,14 @@ let check (globals, functions) =
               else Arr(a_ty, 1)
       |a::b -> let a_ty = var_decl_typ_checking a in
                let Arr(b_ty, size) = array_lit_check b in
-               if a_ty != b_ty then raise (Failure "Array literals are not in uniformed types")
+               if not (a_ty = b_ty) then raise (Failure "Array literals are not in uniformed types")
                else Arr(a_ty, size+1)
     in
 
-(*           | Array_Index of string * expr
-          | Array_Lit of expr list
-          | Arr of typ * int *)
-
       (* Check if a certain kind of binding has void type or is a duplicate
      of another, previously checked binding *)
-  let check_var_decl (kind : string) (var_list : var_decl list) = 
-    let check_it checked var_decl = 
+  let check_var_decl (kind : string) (var_list : var_decl list) map= 
+    let check_it (checked,m) var_decl= 
       let void_err = "illegal void " ^ kind ^ " " ^ sndt var_decl
       and dup_err = "duplicate " ^ kind ^ " " ^ sndt var_decl
       in match var_decl with
@@ -108,14 +95,15 @@ let check (globals, functions) =
         VarDecl (Void, _, _) -> raise (Failure void_err)
 (*        | VarDecl (_, n1, _) -> *) 
        | VarDecl (ty1, n1, e) -> 
+          let m2 = StringMap.add n1 ty1 m in
           let ty2 = var_decl_typ_checking e in
             match ty1 with 
             |Arr (a_ty, size) -> (match ty2 with
-                                  |Arr(b_ty, size2) -> if a_ty != b_ty then raise (Failure "Array literal types not matching array declaration type") else if size != size2 then raise (Failure "Array literal size not matching array declaration size") else
+                                  |Arr(b_ty, size2) -> if not (a_ty = b_ty) then raise (Failure "Array literal types not matching array declaration type") else if size != size2 then raise (Failure "Array literal size not matching array declaration size") else
                                       (match checked with
                                       (* No duplicate variable_declarations *)
                                       (VarDecl (_, n2, _) :: _) when n1 = n2 -> raise (Failure dup_err)
-                                      | _ -> var_decl :: checked)
+                                      | _ -> var_decl :: checked), m2
                                   |_ -> raise (Failure "Array not initalized to the right array literals"))
             |_->
                 let type_err =  "type " ^ string_of_typ ty1 ^ " does not match type " ^ string_of_typ ty2 ^" in the variable declaration " ^ string_of_vdecl var_decl in
@@ -124,20 +112,20 @@ let check (globals, functions) =
                   match checked with
                 (* No duplicate variable_declarations *)
                         (VarDecl (_, n2, _) :: _) when n1 = n2 -> raise (Failure dup_err)
-                        | _ -> var_decl :: checked
-    in let _ = List.fold_left check_it [] (List.sort compare var_list) 
-       in var_list
+                        | _ -> var_decl :: checked, m2
+    in let _,m = List.fold_left check_it ([], map) (List.sort compare var_list) 
+       in var_list, m
   in 
 
 
   (**** Checking Global Variables ****)
 
-  let globals' = check_var_decl "global" globals in
+  let globals', gmap = check_var_decl "global" globals StringMap.empty in
 
     let check_function func =
     (* Make sure no formals or locals are void or duplicates *)
-    let formals' = check_var_decl "formal" func.formals in
-    let locals' = check_var_decl "local" func.locals in
+    let formals', fmap = check_var_decl "formal" func.formals gmap in
+    let locals', lmap = check_var_decl "local" func.locals fmap in
 
     (* Raise an exception if the given rvalue type cannot be assigned to
        the given lvalue type *)
@@ -158,7 +146,26 @@ let check (globals, functions) =
       with Not_found -> raise (Failure ("undeclared identifier " ^ s))
     in
 
+let rec get_layer_and_name array_expr = 
+  match array_expr with
+  | Id s -> 1, s
+  | Array_Index (arr, _) -> let layer, name = get_layer_and_name arr in layer+1, name
+  | _ -> raise (Failure "illegal usage of get_layer_and_name function")
+in
 
+let rec get_actual_type ty layer = 
+  match layer with
+  | 0 -> ty
+  | _ -> match ty with 
+          |Arr(ty2, _) -> get_actual_type ty2 (layer - 1)
+          |_ -> raise (Failure "illegal usage of get_actual_type function")
+
+in
+let get_array_index_type array_expr map = 
+  let layer, name = get_layer_and_name(array_expr) in
+  let ty = StringMap.find name map in
+  get_actual_type ty layer 
+in
 
 (* Return a semantically-checked expression, i.e., with a type *)
     let rec expr e = match e with
@@ -168,26 +175,15 @@ let check (globals, functions) =
       | Noexpr     -> (Void, SNoexpr)
       | Id s       -> (type_of_identifier s, SId s)
       | Sliteral s -> (String, SSliteral s)
-      | Array_Index (arr, ind) ->
+      | Array_Index (arr(*expr*), ind) ->
       let ind' =
         match expr ind with
         | Int, ind' -> ind'
         | _ -> failwith ("expected integer index " ^ string_of_expr ind ^
                          " in " ^ string_of_expr e)
       in
-<<<<<<< HEAD
-     (* let elem_type, arr' =
-=======
-
-(*       let elem_type, arr' =
->>>>>>> master
-        match expr arr with
-        | Arr (t, _), arr' -> t, arr'
-        | _ -> failwith ("expected array " ^ string_of_expr arr ^
-                         " in " ^ string_of_expr e)
-      in *)
-      Int, SArray_Index (arr, ind)
-      | Array_Lit l ->
+      (get_array_index_type arr lmap), SArray_Index (arr, ind)
+      | Array_Lit l -> raise (Failure "array literals cannot be reassigned and they can only be initialized or modified by individual element")
       (* Check array size and equality of element types *)
       (* TODO: in LRM say that implicit conversions do (* not apply to array literals *)
       (match l with
@@ -202,7 +198,7 @@ let check (globals, functions) =
                   ^ string_of_typ lt ^ " and " ^ string_of_typ t)
              in e'') tl
          in *)
-         Arr (Int, 0), SArray_Lit([])
+(*          Arr (Int, 0), SArray_Lit([]) *)
       | Assign(var, e) as ex -> 
           let (lt, _) = expr var
           and (rt, e') = expr e in
