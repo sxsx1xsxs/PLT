@@ -1,3 +1,4 @@
+/*semant error message: Array literal size not matching array declaration size*/
 
 int main () {
    int x[1] = [2,3,4];

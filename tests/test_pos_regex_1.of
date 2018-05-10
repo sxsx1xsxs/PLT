@@ -1,4 +1,7 @@
 /* declare a regex variable */
+/*expected output:
+[1-9]+
+*/
 
 int main(){
         regex r = @[1-9]+@;

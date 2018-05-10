@@ -1,3 +1,8 @@
+/*expected output:
+Hello
+*/
+
+
 int main(){
     string s;
     s = of(@[a-zA-Z]+@, "Hello 42!");

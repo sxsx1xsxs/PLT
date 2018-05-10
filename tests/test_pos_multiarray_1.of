@@ -1,3 +1,7 @@
+/*expected output:
+1
+*/
+
 int main() {
 	int a[2][2] = [[1,2],[3,4]];
 	print(a[0][0]);

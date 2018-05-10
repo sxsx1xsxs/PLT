@@ -1,3 +1,6 @@
+/*expected output:
+hello
+*/
 
 int main () {
    string x[2] = ["hello", "world"];

@@ -1,6 +1,13 @@
+/*expected output:
+8.000000
+0.000000
+*/
+
 int main(){
-    int x[5] = [1,2,3,4,5];
-    int b;
-    b = x[0];
-    print(b);
+    float x[3][2] = [[1.0,2.0],[3.0,4.0],[5.0,6.0]];
+    float b;
+    float c;
+    x[1] = [7.0, 8.0];
+    printf(x[1][1]);
+    printf(c);
 }

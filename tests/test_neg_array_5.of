@@ -1,3 +1,4 @@
+/*semant error message: Array not initalized to the right array literals*/
 
 int main () {
    void x[3];

@@ -1,3 +1,7 @@
+/*expected output:
+3.141593
+*/
+
 int main(){
     float f = 3.1415926;
     printf(f);

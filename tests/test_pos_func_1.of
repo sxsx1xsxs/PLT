@@ -1,4 +1,6 @@
-/*postive test*/
+/*expected output:
+10
+*/
 
 int max (int a, int b)
 {

@@ -1,3 +1,7 @@
+/*expected output:
+1
+*/
+
 int main(){
     int a = 1;
     print(a);

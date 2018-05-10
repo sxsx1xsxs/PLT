@@ -1,5 +1,9 @@
+/*expected output:
+4
+*/
+
 int main() {
 	int a[2][2] = [[1,2],[3,4]];
-	int a[0][0] = 4;
+	a[0][0] = 4;
 	print(a[0][0]);
 }

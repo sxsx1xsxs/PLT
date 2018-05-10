@@ -26,6 +26,7 @@ let check (globals, functions) =
       formals = List.map (fun t -> (VarDecl(t,"x",Noexpr))) tylist;
       locals = []; body = [] } map
     in List.fold_left add_bind StringMap.empty [ 
+                                     ("of", [Regex; String], String);
                                      ("openfile", [String; Int], String);
                                      ("writefile", [String; String; Int], String);
                                      ("print", [Int], Void);
@@ -59,7 +60,8 @@ let check (globals, functions) =
 
   let _ = find_func "main" in (* Ensure "main" is defined *)
 
-
+  let type_equal x y = if (x = File || x = String || x = Regex ) && (y = File || y = String || y = Regex ) then true
+      else x = y in 
 
   let rec var_decl_typ_checking e =
       match e with 
@@ -69,6 +71,7 @@ let check (globals, functions) =
       | Sliteral s -> String
       | Noexpr     -> Void
       | Array_Lit l -> array_lit_check(l)
+      | RegexPattern s -> Regex
       | _ -> raise (Failure "Variable declaration only supports primitive type initialization")
 
       and
@@ -107,7 +110,7 @@ let check (globals, functions) =
                                   |_ -> raise (Failure "Array not initalized to the right array literals"))
             |_->
                 let type_err =  "type " ^ string_of_typ ty1 ^ " does not match type " ^ string_of_typ ty2 ^" in the variable declaration " ^ string_of_vdecl var_decl in
-                if ty1 != ty2 && ty2 != Void then raise (Failure type_err)
+                if not (type_equal ty1 ty2) && ty2 != Void then raise (Failure type_err)
                 else
                   match checked with
                 (* No duplicate variable_declarations *)
@@ -130,7 +133,9 @@ let check (globals, functions) =
     (* Raise an exception if the given rvalue type cannot be assigned to
        the given lvalue type *)
     let check_assign lvaluet rvaluet err =
-       if lvaluet = rvaluet then lvaluet else raise (Failure err)
+       if lvaluet = rvaluet then lvaluet 
+     else if (lvaluet = String || lvaluet = Regex || lvaluet = File) && (rvaluet = String || rvaluet = Regex || rvaluet = File) then lvaluet
+     else raise (Failure err)
     in   
 
     
@@ -167,9 +172,23 @@ let get_array_index_type array_expr map =
   get_actual_type ty layer 
 in
 
+
+ let rec get_array_literal_type l = 
+   match l with 
+   |[] -> raise (Failure "array literals cannot be empty")
+   |[a] -> let ty, _ = expr a in Arr (ty,1)
+   |a::b -> let ty1, _ = expr a in 
+            let Arr(ty2, n) = get_array_literal_type b in
+            if not (ty2 = ty1) then raise (Failure "The array literal is not in uniformed types")
+          else Arr (ty1, n + 1) 
+
+ and 
+ 
+
 (* Return a semantically-checked expression, i.e., with a type *)
-    let rec expr e = match e with
-        Literal  l -> (Int, SLiteral l)
+        expr e = match e with
+      | RegexPattern s -> (Regex, SRegexPattern s)
+      | Literal  l -> (Int, SLiteral l)
       | Fliteral l -> (Float, SFliteral l)
       | BoolLit l  -> (Bool, SBoolLit l)
       | Noexpr     -> (Void, SNoexpr)
@@ -183,22 +202,8 @@ in
                          " in " ^ string_of_expr e)
       in
       (get_array_index_type arr lmap), SArray_Index (arr, ind)
-      | Array_Lit l -> raise (Failure "array literals cannot be reassigned and they can only be initialized or modified by individual element")
-      (* Check array size and equality of element types *)
-      (* TODO: in LRM say that implicit conversions do (* not apply to array literals *)
-      (match l with
-       | [] -> failwith ("illegal empty array " ^ string_of_expr e)
-       | hd :: tl ->
-         let (lt, hd') = expr hd in
-         let tl' = List.map (fun l ->
-             let t, e' = expr l in
-             let _, e'' = check_assign_strict lt e' t
-                 ("array literal " ^ string_of_expr e ^
-                  " contains elements of unequal types "
-                  ^ string_of_typ lt ^ " and " ^ string_of_typ t)
-             in e'') tl
-         in *)
-(*          Arr (Int, 0), SArray_Lit([]) *)
+(*       | Array_Lit l -> raise (Failure "array literals cannot be reassigned and they can only be initialized or modified by individual element") *)
+      | Array_Lit l -> get_array_literal_type l, SArray_Lit([])
       | Assign(var, e) as ex -> 
           let (lt, _) = expr var
           and (rt, e') = expr e in
@@ -241,8 +246,8 @@ in
           else let check_call x e = match x with
           |VarDecl(ft, _, _) ->
             let (et, e') = expr e in 
-            let err = "illegal argument found " ^ string_of_typ et ^
-              " expected " ^ string_of_typ ft ^ " in " ^ string_of_expr e
+            let err = "illegal argument " ^ string_of_typ et ^
+              " found but " ^ string_of_typ ft ^ " is expected in " ^ string_of_expr e
             in (check_assign ft et err, e')
           in 
           let args' = List.map2 check_call fd.formals args
