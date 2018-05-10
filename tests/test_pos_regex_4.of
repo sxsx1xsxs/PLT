@@ -1,9 +1,0 @@
-int match(string s){
-    regex a = @(^[a-z]+\@[a-z]+\.com)@;
-    /*prints(of(a, s));*/
-}
-
-int main(){
-    string s1 = "testing openfile@gmail.com";
-    match(s1);
-}
