@@ -20,7 +20,7 @@ open Str
 module StringMap = Map.Make(String)
 
   (* Helper function for assigning struct values. *)
-  let build_struct_assign str values len builder =
+  let build_struct_assign str values builder =
   let assign (llv, ind) value =
     match value with
     | Some v -> (L.build_insertvalue llv v  ind "" builder, (ind+1))
@@ -249,7 +249,7 @@ let translate (globals, functions) =
         let len = List.length l in
 		let typ = (L.array_type (L.type_of (List.hd lll)) (len)) in
 		let lll = List.map (fun x -> Some x) lll in
-		build_struct_assign (L.undef typ) (Array.of_list lll) len builder
+		build_struct_assign (L.undef typ) (Array.of_list lll) builder
 	  | A.Array_Index (arr, ind) ->
 	    (*let arr', ind' = L.build_load (lookup arr g_map l_map) arr builder, expr builder g_map l_map g_reg l_reg ind in*)
         let arr', ind' = expr builder g_map l_map g_reg l_reg arr, expr builder g_map l_map g_reg l_reg ind in
