@@ -65,13 +65,13 @@ let check (globals, functions) =
 
   let rec var_decl_typ_checking e =
       match e with 
-        Literal  l -> Int
-      | Fliteral l -> Float
-      | BoolLit l  -> Bool
-      | Sliteral s -> String
+        Literal  _ -> Int
+      | Fliteral _ -> Float
+      | BoolLit _  -> Bool
+      | Sliteral _ -> String
       | Noexpr     -> Void
       | Array_Lit l -> array_lit_check(l)
-      | RegexPattern s -> Regex
+      | RegexPattern _ -> Regex
       | _ -> raise (Failure "Variable declaration only supports primitive type initialization")
 
       and
@@ -82,9 +82,12 @@ let check (globals, functions) =
               if a_ty == Void then raise(Failure "Only primitive types are supported in arrays")
               else Arr(a_ty, 1)
       |a::b -> let a_ty = var_decl_typ_checking a in
-               let Arr(b_ty, size) = array_lit_check b in
+               let x = array_lit_check b in
+               match x with 
+               | Arr(b_ty, size) ->
                if not (a_ty = b_ty) then raise (Failure "Array literals are not in uniformed types")
                else Arr(a_ty, size+1)
+               | _ -> raise (Failure "not expected behavior")
     in
 
       (* Check if a certain kind of binding has void type or is a duplicate
@@ -178,9 +181,12 @@ in
    |[] -> raise (Failure "array literals cannot be empty")
    |[a] -> let ty, _ = expr a in Arr (ty,1)
    |a::b -> let ty1, _ = expr a in 
-            let Arr(ty2, n) = get_array_literal_type b in
+            let x = get_array_literal_type b in
+            match x with 
+            |Arr(ty2, n) ->
             if not (ty2 = ty1) then raise (Failure "The array literal is not in uniformed types")
           else Arr (ty1, n + 1) 
+          | _ -> raise (Failure "unexpected behavior")
 
  and 
  
@@ -195,7 +201,7 @@ in
       | Id s       -> (type_of_identifier s, SId s)
       | Sliteral s -> (String, SSliteral s)
       | Array_Index (arr(*expr*), ind) ->
-      let ind' =
+    let _ =
         match expr ind with
         | Int, ind' -> ind'
         | _ -> failwith ("expected integer index " ^ string_of_expr ind ^
@@ -204,7 +210,7 @@ in
       (get_array_index_type arr lmap), SArray_Index (arr, ind)
 (*       | Array_Lit l -> raise (Failure "array literals cannot be reassigned and they can only be initialized or modified by individual element") *)
       | Array_Lit l -> get_array_literal_type l, SArray_Lit([])
-      | Assign(var, e) as ex -> 
+      | Assign(var, e)-> 
           let (lt, _) = expr var
           and (rt, e') = expr e in
           let err = "illegal assignment " (* ^ string_of_typ lt ^ " = " ^ 
@@ -252,6 +258,7 @@ in
           in 
           let args' = List.map2 check_call fd.formals args
           in (fd.ftyp, SCall(fname, args'))
+    | _ -> raise (Failure "not implemented")
     in
 
     let check_bool_expr e = 
